@@ -1,0 +1,264 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{e65546bf-8f0d-42f6-81c7-75667530e7e5}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{22cbeac2-8b75-4f1c-ab09-daa2f9465483}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{3dea9862-e13b-4c6a-a2a6-da0ce30b177f}</UniqueIdentifier>
+      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\Charset.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Code.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Edit.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\File.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Font.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Ini.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Item.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\jp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ListView.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MailBox.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\md5c.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Memory.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\mime.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MultiPart.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Option.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Pop3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Profile.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Smtp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\String.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\util.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\View.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\WinSock.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dpi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ssl.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="nPOP.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\Charset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\code.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Font.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\General.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\global.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\jp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\md5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\mime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\multipart.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Profile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resrc1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\String.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\EN\Strtbl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dpi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ssl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\res\bitmap.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\bmp00001.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\bmp00002.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\bmp00003.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00001.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00002.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00003.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00004.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00005.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00006.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00007.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00008.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00009.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00010.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00011.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\ico00012.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\icon.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\icon1.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\icon_che.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\icon_cli.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\icon_del.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\icon_dow.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\icon_new.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\icon_non.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\icon_rea.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\icon_sen.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\toolbar.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\toolbar_.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\toolbar_win32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\toolbar_32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\toolbar_48.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\toolbar_view_32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\toolbar_view_48.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\toolbar_edit_32.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\res\toolbar_edit_48.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\res\manifest.xml">
+      <Filter>Resource Files</Filter>
+    </Xml>
+  </ItemGroup>
+</Project>
