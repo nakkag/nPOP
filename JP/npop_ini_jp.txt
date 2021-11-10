@@ -1,0 +1,126 @@
+#
+# INIファイルでのみ設定可能な項目の解説
+#
+# 設定時はnPOPを終了しておいてください。
+#
+
+[GENERAL]
+#データ保存先
+DataFileDir=
+#送受信のログを 0-取らない 1-取る (ファイル名は nPOP.log 固定)
+SocLog=1
+
+#コントロールのフォント名、未設定時はシステムのフォントを使用する
+LvFontName=
+#コントロールのフォントサイズ、LvFontName を設定している時のみ有効
+LvFontSize=9
+#コントロールのフォントキャラクタセット、LvFontName を設定している時のみ有効
+LvFontCharset=128
+
+#タイムゾーン、未設定時はシステムのタイムゾーンを使用する。記述は "+0900" のように書く
+TimeZone=""
+#表示用の日付フォーマット、未設定時はシステムの形式を使用する
+DateFormat="yyyy/MM/dd"
+#表示用の時刻フォーマット、未設定時はシステムの形式を使用する
+TimeFormat="HH:mm"
+
+#タスクトレイにアイコンを表示する設定の時、起動時にウィンドウを 0-表示する 1-表示しない
+StartHide=0
+#タスクトレイのアイコンをクリックすると 0-表示のみ 1-表示／非表示の切り替え
+TrayIconToggle=0
+#起動時に全てのアカウントの新着取得位置を 0-初期化しない 1-初期化する
+StartInit=0
+
+#ListViewの未開封が無い場合の選択位置 0-一番上のアイテム 1-一番下のアイテム
+LvDefSelectPos=1
+#ListViewの自動ソートを 0-行わない 1-保存箱のみ行う 2-全てのアカウントで行う
+LvAutoSort=1
+#ListViewのスタイル
+LvStyle=9
+#ListViewの拡張スタイル
+LvStyleEx=1056
+#受信中にスクロールを 0-行わない 1-行う
+RecvScroll=1
+#保存箱へコピーするときに確認メッセージを 0-出さない 1-出す
+SaveMsg=1
+#保存箱、送信箱、アドレス帳に変化があったときに 0-保存しない 1-保存する
+AutoSave=1
+
+#ESMTPを 0-使わない 1-使う
+ESMTP=0
+#SMTPの HELO に付加する文字列
+SendHelo=
+#POP before SMTP の認証は 0-新着チェックを行う 1-POP3サーバへのログインのみを行う
+PopBeforeSmtpIsLoginOnly=1
+#POP before SMTP で認証後の待ち時間(ミリ秒)
+PopBeforeSmtpWait=300
+#返信時のSubjectに付加する文字列
+ReSubject="Re: "
+#行頭禁則 (全角)
+Bura="、。，．？！゛゜…‥・’”：；）〕］｝〉》」』】≫々ゝゞぁぃぅぇぉっゃゅょァィゥェォッャュョー"
+#行末禁則 (全角)
+Oida="‘“￥＄（［｛「〔《『【〈≪"
+#行頭禁則 (半角)
+sBura=",.?!%:;)]}｣｡､ﾞﾟ"
+#行末禁則 (半角)
+sOida="\$([{｢"
+
+#SSL用CA証明書ファイル(PEM形式)
+CAFile=
+
+#IPアドレスを 0-キャッシュしない 1-キャッシュする
+IPCache=1
+
+#メール到着メッセージを 0-非アクティブで表示 1-アクティブにして表示
+ActiveNewMailMessgae=0
+#メール到着時に鳴らすwavファイル
+NewMailSoundFile=
+#実行終了時に鳴らすwavファイル
+ExecEndSoundFile=
+#チェック終了時に 0-実行を行わない 1-実行を行う
+CheckEndExec=0
+#チェック終了時の実行で削除確認を 0-行わない 1-行う
+CheckEndExecNoDelMsg=1
+#通信がタイムアウトするまでの時間(分)
+TimeoutInterval=3
+
+#外部ビューアのパス
+ViewApp=
+#外部ビューアに渡すコマンドライン。 %1 で渡すファイル名
+ViewAppCmdLine=
+#外部ビューアに渡すファイル名の拡張子
+ViewFileSuffix="txt"
+#外部ビューアに渡すファイルのヘッダ (%f-From, %t-To, %c-Cc, %s-Subject, %d-Date, %i-Message-ID, %%-%, \n-改行, \t-TAB, \\-\)
+ViewFileHeader="From: %f\nTo: %t\nCc: %c\nSubject: %s\nDate: %d\n"
+#外部ビューアを表示するときに内部ビューアを 0-閉じない 1-閉じる
+ViewAppClose=0
+
+#外部ビューアを 0-デフォルトにしない 1-デフォルトにする
+DefViewApp=0
+#外部エディタのパス
+EditApp=
+#外部エディタに渡すコマンドライン。 %1 で渡すファイル名
+EditAppCmdLine=
+#外部エディタに渡すファイル名の拡張子
+EditFileSuffix="txt"
+#外部エディタを 0-デフォルトにしない 1-デフォルトにする
+DefEditApp=0
+
+#添付ファイルを開く時の保存先 (DataFileDir\AttachPath)
+AttachPath="_attach_"
+#添付ファイルを開く時に 0-警告を出さない 1-警告を出す
+AttachWarning=1
+#終了時に開くで使われた添付ファイルを 0-削除しない 1-削除する
+AttachDelete=1
+
+#URLを処理するアプリケーション、指定しない場合はデフォルトのブラウザを使用する
+URLApp=
+
+[MAILBOX-n]
+#POP3でUIDLを 0-使う 1-使わない
+NoUIDL=0
+
+#送信設定で Reply-To が指定されていない場合に付加する Reply-To
+ReplyTo=
+#「送信時に自分当てにコピーを送信」の送信先 (","で区切って複数指定可)
+BccAddr=
