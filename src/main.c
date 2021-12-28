@@ -2541,7 +2541,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 #ifdef UNICODE
 				TEXT(" (UNICODE)")
 #endif
-				TEXT("\nCopyright (C) 1996-2020 by Ohno Tomoaki. All rights reserved.\n\n")
+				TEXT("\nCopyright (C) 1996-2021 by Ohno Tomoaki. All rights reserved.\n\n")
 				TEXT("WEB SITE: https://www.nakka.com/\nE-MAIL: nakka@nakka.com"),
 				TEXT("About"), MB_OK | MB_ICONINFORMATION);
 			break;
