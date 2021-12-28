@@ -337,7 +337,7 @@ BOOL file_read_select(HWND hWnd, TCHAR **buf)
 	int len;
 	int bom = 0;
 	// BOMをスキップ
-	if (FileSize > 3 && *cBuf == 0xEF && *(cBuf + 1) == 0xBB && *(cBuf + 2) == 0xBF) {
+	if (FileSize >= 3 && *cBuf == 0xEF && *(cBuf + 1) == 0xBB && *(cBuf + 2) == 0xBF) {
 		bom = 3;
 	}
 	// UTF-8からUTF-16に変換
@@ -407,7 +407,7 @@ BOOL file_read_mailbox(TCHAR *FileName, MAILBOX *tpMailBox)
 #endif	// _NOFILEMAP
 
 	// BOMをスキップ
-	if (FileSize > 3 && (BYTE)(*FileBuf) == 0xEF && (BYTE)(*(FileBuf + 1)) == 0xBB && (BYTE)(*(FileBuf + 2)) == 0xBF) {
+	if (FileSize >= 3 && (BYTE)(*FileBuf) == 0xEF && (BYTE)(*(FileBuf + 1)) == 0xBB && (BYTE)(*(FileBuf + 2)) == 0xBF) {
 		bom = 3;
 	}
 

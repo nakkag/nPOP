@@ -288,7 +288,7 @@ BOOL profile_initialize(const TCHAR *file_path, const BOOL read_flag)
 	CloseHandle(hFile);
 
 #ifdef UNICODE
-	if(size_low > 2 && *cbuf == 0xFF && *(cbuf + 1) == 0xFE) {
+	if(size_low >= 2 && *cbuf == 0xFF && *(cbuf + 1) == 0xFE) {
 		// BOMをスキップ
 		len = (size_low - 2) / sizeof(TCHAR);
 		buf = (TCHAR *)(cbuf + 2);
