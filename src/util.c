@@ -1705,7 +1705,7 @@ static BOOL URLHeadToItem(TCHAR *str, TCHAR *head, TCHAR **buf)
 BOOL URLToMailItem(TCHAR *buf, MAILITEM *tpMailItem)
 {
 #ifdef UNICODE
-	TCHAR *body;
+	TCHAR *body = NULL;
 #endif
 	TCHAR *tmp;
 	TCHAR *p, *r, *s;
