@@ -1,126 +1,126 @@
 #
-# INIƒtƒ@ƒCƒ‹‚Å‚Ì‚ÝÝ’è‰Â”\‚È€–Ú‚Ì‰ðà
+# INIãƒ•ã‚¡ã‚¤ãƒ«ã§ã®ã¿è¨­å®šå¯èƒ½ãªé …ç›®ã®è§£èª¬
 #
-# Ý’èŽž‚ÍnPOP‚ðI—¹‚µ‚Ä‚¨‚¢‚Ä‚­‚¾‚³‚¢B
+# è¨­å®šæ™‚ã¯nPOPã‚’çµ‚äº†ã—ã¦ãŠã„ã¦ãã ã•ã„ã€‚
 #
 
 [GENERAL]
-#ƒf[ƒ^•Û‘¶æ
+#ãƒ‡ãƒ¼ã‚¿ä¿å­˜å…ˆ
 DataFileDir=
-#‘—ŽóM‚ÌƒƒO‚ð 0-Žæ‚ç‚È‚¢ 1-Žæ‚é (ƒtƒ@ƒCƒ‹–¼‚Í nPOP.log ŒÅ’è)
+#é€å—ä¿¡ã®ãƒ­ã‚°ã‚’ 0-å–ã‚‰ãªã„ 1-å–ã‚‹ (ãƒ•ã‚¡ã‚¤ãƒ«åã¯ nPOP.log å›ºå®š)
 SocLog=1
 
-#ƒRƒ“ƒgƒ[ƒ‹‚ÌƒtƒHƒ“ƒg–¼A–¢Ý’èŽž‚ÍƒVƒXƒeƒ€‚ÌƒtƒHƒ“ƒg‚ðŽg—p‚·‚é
+#ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®ãƒ•ã‚©ãƒ³ãƒˆåã€æœªè¨­å®šæ™‚ã¯ã‚·ã‚¹ãƒ†ãƒ ã®ãƒ•ã‚©ãƒ³ãƒˆã‚’ä½¿ç”¨ã™ã‚‹
 LvFontName=
-#ƒRƒ“ƒgƒ[ƒ‹‚ÌƒtƒHƒ“ƒgƒTƒCƒYALvFontName ‚ðÝ’è‚µ‚Ä‚¢‚éŽž‚Ì‚Ý—LŒø
+#ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®ãƒ•ã‚©ãƒ³ãƒˆã‚µã‚¤ã‚ºã€LvFontName ã‚’è¨­å®šã—ã¦ã„ã‚‹æ™‚ã®ã¿æœ‰åŠ¹
 LvFontSize=9
-#ƒRƒ“ƒgƒ[ƒ‹‚ÌƒtƒHƒ“ƒgƒLƒƒƒ‰ƒNƒ^ƒZƒbƒgALvFontName ‚ðÝ’è‚µ‚Ä‚¢‚éŽž‚Ì‚Ý—LŒø
+#ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ«ã®ãƒ•ã‚©ãƒ³ãƒˆã‚­ãƒ£ãƒ©ã‚¯ã‚¿ã‚»ãƒƒãƒˆã€LvFontName ã‚’è¨­å®šã—ã¦ã„ã‚‹æ™‚ã®ã¿æœ‰åŠ¹
 LvFontCharset=128
 
-#ƒ^ƒCƒ€ƒ][ƒ“A–¢Ý’èŽž‚ÍƒVƒXƒeƒ€‚Ìƒ^ƒCƒ€ƒ][ƒ“‚ðŽg—p‚·‚éB‹Lq‚Í "+0900" ‚Ì‚æ‚¤‚É‘‚­
+#ã‚¿ã‚¤ãƒ ã‚¾ãƒ¼ãƒ³ã€æœªè¨­å®šæ™‚ã¯ã‚·ã‚¹ãƒ†ãƒ ã®ã‚¿ã‚¤ãƒ ã‚¾ãƒ¼ãƒ³ã‚’ä½¿ç”¨ã™ã‚‹ã€‚è¨˜è¿°ã¯ "+0900" ã®ã‚ˆã†ã«æ›¸ã
 TimeZone=""
-#•\Ž¦—p‚Ì“ú•tƒtƒH[ƒ}ƒbƒgA–¢Ý’èŽž‚ÍƒVƒXƒeƒ€‚ÌŒ`Ž®‚ðŽg—p‚·‚é
+#è¡¨ç¤ºç”¨ã®æ—¥ä»˜ãƒ•ã‚©ãƒ¼ãƒžãƒƒãƒˆã€æœªè¨­å®šæ™‚ã¯ã‚·ã‚¹ãƒ†ãƒ ã®å½¢å¼ã‚’ä½¿ç”¨ã™ã‚‹
 DateFormat="yyyy/MM/dd"
-#•\Ž¦—p‚ÌŽžƒtƒH[ƒ}ƒbƒgA–¢Ý’èŽž‚ÍƒVƒXƒeƒ€‚ÌŒ`Ž®‚ðŽg—p‚·‚é
+#è¡¨ç¤ºç”¨ã®æ™‚åˆ»ãƒ•ã‚©ãƒ¼ãƒžãƒƒãƒˆã€æœªè¨­å®šæ™‚ã¯ã‚·ã‚¹ãƒ†ãƒ ã®å½¢å¼ã‚’ä½¿ç”¨ã™ã‚‹
 TimeFormat="HH:mm"
 
-#ƒ^ƒXƒNƒgƒŒƒC‚ÉƒAƒCƒRƒ“‚ð•\Ž¦‚·‚éÝ’è‚ÌŽžA‹N“®Žž‚ÉƒEƒBƒ“ƒhƒE‚ð 0-•\Ž¦‚·‚é 1-•\Ž¦‚µ‚È‚¢
+#ã‚¿ã‚¹ã‚¯ãƒˆãƒ¬ã‚¤ã«ã‚¢ã‚¤ã‚³ãƒ³ã‚’è¡¨ç¤ºã™ã‚‹è¨­å®šã®æ™‚ã€èµ·å‹•æ™‚ã«ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ 0-è¡¨ç¤ºã™ã‚‹ 1-è¡¨ç¤ºã—ãªã„
 StartHide=0
-#ƒ^ƒXƒNƒgƒŒƒC‚ÌƒAƒCƒRƒ“‚ðƒNƒŠƒbƒN‚·‚é‚Æ 0-•\Ž¦‚Ì‚Ý 1-•\Ž¦^”ñ•\Ž¦‚ÌØ‚è‘Ö‚¦
+#ã‚¿ã‚¹ã‚¯ãƒˆãƒ¬ã‚¤ã®ã‚¢ã‚¤ã‚³ãƒ³ã‚’ã‚¯ãƒªãƒƒã‚¯ã™ã‚‹ã¨ 0-è¡¨ç¤ºã®ã¿ 1-è¡¨ç¤ºï¼éžè¡¨ç¤ºã®åˆ‡ã‚Šæ›¿ãˆ
 TrayIconToggle=0
-#‹N“®Žž‚É‘S‚Ä‚ÌƒAƒJƒEƒ“ƒg‚ÌV’…Žæ“¾ˆÊ’u‚ð 0-‰Šú‰»‚µ‚È‚¢ 1-‰Šú‰»‚·‚é
+#èµ·å‹•æ™‚ã«å…¨ã¦ã®ã‚¢ã‚«ã‚¦ãƒ³ãƒˆã®æ–°ç€å–å¾—ä½ç½®ã‚’ 0-åˆæœŸåŒ–ã—ãªã„ 1-åˆæœŸåŒ–ã™ã‚‹
 StartInit=0
 
-#ListView‚Ì–¢ŠJ••‚ª–³‚¢ê‡‚Ì‘I‘ðˆÊ’u 0-ˆê”Ôã‚ÌƒAƒCƒeƒ€ 1-ˆê”Ô‰º‚ÌƒAƒCƒeƒ€
+#ListViewã®æœªé–‹å°ãŒç„¡ã„å ´åˆã®é¸æŠžä½ç½® 0-ä¸€ç•ªä¸Šã®ã‚¢ã‚¤ãƒ†ãƒ  1-ä¸€ç•ªä¸‹ã®ã‚¢ã‚¤ãƒ†ãƒ 
 LvDefSelectPos=1
-#ListView‚ÌŽ©“®ƒ\[ƒg‚ð 0-s‚í‚È‚¢ 1-•Û‘¶” ‚Ì‚Ýs‚¤ 2-‘S‚Ä‚ÌƒAƒJƒEƒ“ƒg‚Ås‚¤
+#ListViewã®è‡ªå‹•ã‚½ãƒ¼ãƒˆã‚’ 0-è¡Œã‚ãªã„ 1-ä¿å­˜ç®±ã®ã¿è¡Œã† 2-å…¨ã¦ã®ã‚¢ã‚«ã‚¦ãƒ³ãƒˆã§è¡Œã†
 LvAutoSort=1
-#ListView‚ÌƒXƒ^ƒCƒ‹
+#ListViewã®ã‚¹ã‚¿ã‚¤ãƒ«
 LvStyle=9
-#ListView‚ÌŠg’£ƒXƒ^ƒCƒ‹
+#ListViewã®æ‹¡å¼µã‚¹ã‚¿ã‚¤ãƒ«
 LvStyleEx=1056
-#ŽóM’†‚ÉƒXƒNƒ[ƒ‹‚ð 0-s‚í‚È‚¢ 1-s‚¤
+#å—ä¿¡ä¸­ã«ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«ã‚’ 0-è¡Œã‚ãªã„ 1-è¡Œã†
 RecvScroll=1
-#•Û‘¶” ‚ÖƒRƒs[‚·‚é‚Æ‚«‚ÉŠm”FƒƒbƒZ[ƒW‚ð 0-o‚³‚È‚¢ 1-o‚·
+#ä¿å­˜ç®±ã¸ã‚³ãƒ”ãƒ¼ã™ã‚‹ã¨ãã«ç¢ºèªãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’ 0-å‡ºã•ãªã„ 1-å‡ºã™
 SaveMsg=1
-#•Û‘¶” A‘—M” AƒAƒhƒŒƒX’ ‚É•Ï‰»‚ª‚ ‚Á‚½‚Æ‚«‚É 0-•Û‘¶‚µ‚È‚¢ 1-•Û‘¶‚·‚é
+#ä¿å­˜ç®±ã€é€ä¿¡ç®±ã€ã‚¢ãƒ‰ãƒ¬ã‚¹å¸³ã«å¤‰åŒ–ãŒã‚ã£ãŸã¨ãã« 0-ä¿å­˜ã—ãªã„ 1-ä¿å­˜ã™ã‚‹
 AutoSave=1
 
-#ESMTP‚ð 0-Žg‚í‚È‚¢ 1-Žg‚¤
+#ESMTPã‚’ 0-ä½¿ã‚ãªã„ 1-ä½¿ã†
 ESMTP=0
-#SMTP‚Ì HELO ‚É•t‰Á‚·‚é•¶Žš—ñ
+#SMTPã® HELO ã«ä»˜åŠ ã™ã‚‹æ–‡å­—åˆ—
 SendHelo=
-#POP before SMTP ‚Ì”FØ‚Í 0-V’…ƒ`ƒFƒbƒN‚ðs‚¤ 1-POP3ƒT[ƒo‚Ö‚ÌƒƒOƒCƒ“‚Ì‚Ý‚ðs‚¤
+#POP before SMTP ã®èªè¨¼ã¯ 0-æ–°ç€ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã† 1-POP3ã‚µãƒ¼ãƒã¸ã®ãƒ­ã‚°ã‚¤ãƒ³ã®ã¿ã‚’è¡Œã†
 PopBeforeSmtpIsLoginOnly=1
-#POP before SMTP ‚Å”FØŒã‚Ì‘Ò‚¿ŽžŠÔ(ƒ~ƒŠ•b)
+#POP before SMTP ã§èªè¨¼å¾Œã®å¾…ã¡æ™‚é–“(ãƒŸãƒªç§’)
 PopBeforeSmtpWait=300
-#•ÔMŽž‚ÌSubject‚É•t‰Á‚·‚é•¶Žš—ñ
+#è¿”ä¿¡æ™‚ã®Subjectã«ä»˜åŠ ã™ã‚‹æ–‡å­—åˆ—
 ReSubject="Re: "
-#s“ª‹Ö‘¥ (‘SŠp)
-Bura="ABCDHIJKcdEfhFGjlnprtvxzâXTU‚Ÿ‚¡‚£‚¥‚§‚Á‚á‚ã‚åƒ@ƒBƒDƒFƒHƒbƒƒƒ…ƒ‡["
-#s––‹Ö‘¥ (‘SŠp)
-Oida="egimoukswyqá"
-#s“ª‹Ö‘¥ (”¼Šp)
-sBura=",.?!%:;)]}£¡¤Þß"
-#s––‹Ö‘¥ (”¼Šp)
-sOida="\$([{¢"
+#è¡Œé ­ç¦å‰‡ (å…¨è§’)
+Bura="ã€ã€‚ï¼Œï¼Žï¼Ÿï¼ã‚›ã‚œâ€¦â€¥ãƒ»â€™â€ï¼šï¼›ï¼‰ã€•ï¼½ï½ã€‰ã€‹ã€ã€ã€‘â‰«ã€…ã‚ã‚žããƒã…ã‡ã‰ã£ã‚ƒã‚…ã‚‡ã‚¡ã‚£ã‚¥ã‚§ã‚©ãƒƒãƒ£ãƒ¥ãƒ§ãƒ¼"
+#è¡Œæœ«ç¦å‰‡ (å…¨è§’)
+Oida="â€˜â€œï¿¥ï¼„ï¼ˆï¼»ï½›ã€Œã€”ã€Šã€Žã€ã€ˆâ‰ª"
+#è¡Œé ­ç¦å‰‡ (åŠè§’)
+sBura=",.?!%:;)]}ï½£ï½¡ï½¤ï¾žï¾Ÿ"
+#è¡Œæœ«ç¦å‰‡ (åŠè§’)
+sOida="\$([{ï½¢"
 
-#SSL—pCAØ–¾‘ƒtƒ@ƒCƒ‹(PEMŒ`Ž®)
+#SSLç”¨CAè¨¼æ˜Žæ›¸ãƒ•ã‚¡ã‚¤ãƒ«(PEMå½¢å¼)
 CAFile=
 
-#IPƒAƒhƒŒƒX‚ð 0-ƒLƒƒƒbƒVƒ…‚µ‚È‚¢ 1-ƒLƒƒƒbƒVƒ…‚·‚é
+#IPã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’ 0-ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã—ãªã„ 1-ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã™ã‚‹
 IPCache=1
 
-#ƒ[ƒ‹“ž’…ƒƒbƒZ[ƒW‚ð 0-”ñƒAƒNƒeƒBƒu‚Å•\Ž¦ 1-ƒAƒNƒeƒBƒu‚É‚µ‚Ä•\Ž¦
+#ãƒ¡ãƒ¼ãƒ«åˆ°ç€ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’ 0-éžã‚¢ã‚¯ãƒ†ã‚£ãƒ–ã§è¡¨ç¤º 1-ã‚¢ã‚¯ãƒ†ã‚£ãƒ–ã«ã—ã¦è¡¨ç¤º
 ActiveNewMailMessgae=0
-#ƒ[ƒ‹“ž’…Žž‚É–Â‚ç‚·wavƒtƒ@ƒCƒ‹
+#ãƒ¡ãƒ¼ãƒ«åˆ°ç€æ™‚ã«é³´ã‚‰ã™wavãƒ•ã‚¡ã‚¤ãƒ«
 NewMailSoundFile=
-#ŽÀsI—¹Žž‚É–Â‚ç‚·wavƒtƒ@ƒCƒ‹
+#å®Ÿè¡Œçµ‚äº†æ™‚ã«é³´ã‚‰ã™wavãƒ•ã‚¡ã‚¤ãƒ«
 ExecEndSoundFile=
-#ƒ`ƒFƒbƒNI—¹Žž‚É 0-ŽÀs‚ðs‚í‚È‚¢ 1-ŽÀs‚ðs‚¤
+#ãƒã‚§ãƒƒã‚¯çµ‚äº†æ™‚ã« 0-å®Ÿè¡Œã‚’è¡Œã‚ãªã„ 1-å®Ÿè¡Œã‚’è¡Œã†
 CheckEndExec=0
-#ƒ`ƒFƒbƒNI—¹Žž‚ÌŽÀs‚ÅíœŠm”F‚ð 0-s‚í‚È‚¢ 1-s‚¤
+#ãƒã‚§ãƒƒã‚¯çµ‚äº†æ™‚ã®å®Ÿè¡Œã§å‰Šé™¤ç¢ºèªã‚’ 0-è¡Œã‚ãªã„ 1-è¡Œã†
 CheckEndExecNoDelMsg=1
-#’ÊM‚ªƒ^ƒCƒ€ƒAƒEƒg‚·‚é‚Ü‚Å‚ÌŽžŠÔ(•ª)
+#é€šä¿¡ãŒã‚¿ã‚¤ãƒ ã‚¢ã‚¦ãƒˆã™ã‚‹ã¾ã§ã®æ™‚é–“(åˆ†)
 TimeoutInterval=3
 
-#ŠO•”ƒrƒ…[ƒA‚ÌƒpƒX
+#å¤–éƒ¨ãƒ“ãƒ¥ãƒ¼ã‚¢ã®ãƒ‘ã‚¹
 ViewApp=
-#ŠO•”ƒrƒ…[ƒA‚É“n‚·ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“B %1 ‚Å“n‚·ƒtƒ@ƒCƒ‹–¼
+#å¤–éƒ¨ãƒ“ãƒ¥ãƒ¼ã‚¢ã«æ¸¡ã™ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³ã€‚ %1 ã§æ¸¡ã™ãƒ•ã‚¡ã‚¤ãƒ«å
 ViewAppCmdLine=
-#ŠO•”ƒrƒ…[ƒA‚É“n‚·ƒtƒ@ƒCƒ‹–¼‚ÌŠg’£Žq
+#å¤–éƒ¨ãƒ“ãƒ¥ãƒ¼ã‚¢ã«æ¸¡ã™ãƒ•ã‚¡ã‚¤ãƒ«åã®æ‹¡å¼µå­
 ViewFileSuffix="txt"
-#ŠO•”ƒrƒ…[ƒA‚É“n‚·ƒtƒ@ƒCƒ‹‚Ìƒwƒbƒ_ (%f-From, %t-To, %c-Cc, %s-Subject, %d-Date, %i-Message-ID, %%-%, \n-‰üs, \t-TAB, \\-\)
+#å¤–éƒ¨ãƒ“ãƒ¥ãƒ¼ã‚¢ã«æ¸¡ã™ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ˜ãƒƒãƒ€ (%f-From, %t-To, %c-Cc, %s-Subject, %d-Date, %i-Message-ID, %%-%, \n-æ”¹è¡Œ, \t-TAB, \\-\)
 ViewFileHeader="From: %f\nTo: %t\nCc: %c\nSubject: %s\nDate: %d\n"
-#ŠO•”ƒrƒ…[ƒA‚ð•\Ž¦‚·‚é‚Æ‚«‚É“à•”ƒrƒ…[ƒA‚ð 0-•Â‚¶‚È‚¢ 1-•Â‚¶‚é
+#å¤–éƒ¨ãƒ“ãƒ¥ãƒ¼ã‚¢ã‚’è¡¨ç¤ºã™ã‚‹ã¨ãã«å†…éƒ¨ãƒ“ãƒ¥ãƒ¼ã‚¢ã‚’ 0-é–‰ã˜ãªã„ 1-é–‰ã˜ã‚‹
 ViewAppClose=0
 
-#ŠO•”ƒrƒ…[ƒA‚ð 0-ƒfƒtƒHƒ‹ƒg‚É‚µ‚È‚¢ 1-ƒfƒtƒHƒ‹ƒg‚É‚·‚é
+#å¤–éƒ¨ãƒ“ãƒ¥ãƒ¼ã‚¢ã‚’ 0-ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã«ã—ãªã„ 1-ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã«ã™ã‚‹
 DefViewApp=0
-#ŠO•”ƒGƒfƒBƒ^‚ÌƒpƒX
+#å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ã®ãƒ‘ã‚¹
 EditApp=
-#ŠO•”ƒGƒfƒBƒ^‚É“n‚·ƒRƒ}ƒ“ƒhƒ‰ƒCƒ“B %1 ‚Å“n‚·ƒtƒ@ƒCƒ‹–¼
+#å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ã«æ¸¡ã™ã‚³ãƒžãƒ³ãƒ‰ãƒ©ã‚¤ãƒ³ã€‚ %1 ã§æ¸¡ã™ãƒ•ã‚¡ã‚¤ãƒ«å
 EditAppCmdLine=
-#ŠO•”ƒGƒfƒBƒ^‚É“n‚·ƒtƒ@ƒCƒ‹–¼‚ÌŠg’£Žq
+#å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ã«æ¸¡ã™ãƒ•ã‚¡ã‚¤ãƒ«åã®æ‹¡å¼µå­
 EditFileSuffix="txt"
-#ŠO•”ƒGƒfƒBƒ^‚ð 0-ƒfƒtƒHƒ‹ƒg‚É‚µ‚È‚¢ 1-ƒfƒtƒHƒ‹ƒg‚É‚·‚é
+#å¤–éƒ¨ã‚¨ãƒ‡ã‚£ã‚¿ã‚’ 0-ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã«ã—ãªã„ 1-ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã«ã™ã‚‹
 DefEditApp=0
 
-#“Y•tƒtƒ@ƒCƒ‹‚ðŠJ‚­Žž‚Ì•Û‘¶æ (DataFileDir\AttachPath)
+#æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãæ™‚ã®ä¿å­˜å…ˆ (DataFileDir\AttachPath)
 AttachPath="_attach_"
-#“Y•tƒtƒ@ƒCƒ‹‚ðŠJ‚­Žž‚É 0-Œx‚ðo‚³‚È‚¢ 1-Œx‚ðo‚·
+#æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ãæ™‚ã« 0-è­¦å‘Šã‚’å‡ºã•ãªã„ 1-è­¦å‘Šã‚’å‡ºã™
 AttachWarning=1
-#I—¹Žž‚ÉŠJ‚­‚ÅŽg‚í‚ê‚½“Y•tƒtƒ@ƒCƒ‹‚ð 0-íœ‚µ‚È‚¢ 1-íœ‚·‚é
+#çµ‚äº†æ™‚ã«é–‹ãã§ä½¿ã‚ã‚ŒãŸæ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ 0-å‰Šé™¤ã—ãªã„ 1-å‰Šé™¤ã™ã‚‹
 AttachDelete=1
 
-#URL‚ðˆ—‚·‚éƒAƒvƒŠƒP[ƒVƒ‡ƒ“AŽw’è‚µ‚È‚¢ê‡‚ÍƒfƒtƒHƒ‹ƒg‚Ìƒuƒ‰ƒEƒU‚ðŽg—p‚·‚é
+#URLã‚’å‡¦ç†ã™ã‚‹ã‚¢ãƒ—ãƒªã‚±ãƒ¼ã‚·ãƒ§ãƒ³ã€æŒ‡å®šã—ãªã„å ´åˆã¯ãƒ‡ãƒ•ã‚©ãƒ«ãƒˆã®ãƒ–ãƒ©ã‚¦ã‚¶ã‚’ä½¿ç”¨ã™ã‚‹
 URLApp=
 
 [MAILBOX-n]
-#POP3‚ÅUIDL‚ð 0-Žg‚¤ 1-Žg‚í‚È‚¢
+#POP3ã§UIDLã‚’ 0-ä½¿ã† 1-ä½¿ã‚ãªã„
 NoUIDL=0
 
-#‘—MÝ’è‚Å Reply-To ‚ªŽw’è‚³‚ê‚Ä‚¢‚È‚¢ê‡‚É•t‰Á‚·‚é Reply-To
+#é€ä¿¡è¨­å®šã§ Reply-To ãŒæŒ‡å®šã•ã‚Œã¦ã„ãªã„å ´åˆã«ä»˜åŠ ã™ã‚‹ Reply-To
 ReplyTo=
-#u‘—MŽž‚ÉŽ©•ª“–‚Ä‚ÉƒRƒs[‚ð‘—Mv‚Ì‘—Mæ (","‚Å‹æØ‚Á‚Ä•¡”Žw’è‰Â)
+#ã€Œé€ä¿¡æ™‚ã«è‡ªåˆ†å½“ã¦ã«ã‚³ãƒ”ãƒ¼ã‚’é€ä¿¡ã€ã®é€ä¿¡å…ˆ (","ã§åŒºåˆ‡ã£ã¦è¤‡æ•°æŒ‡å®šå¯)
 BccAddr=
