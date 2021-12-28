@@ -1,4 +1,4 @@
-nPOP Ver 1.2.3
+nPOP Ver 1.2.4
 --
 
 [Introduction]
@@ -33,7 +33,7 @@ of new e-mail.
 
 [Environment]
 
-- Windows XP, Vista, 7, 8, 8.1, 10
+- Windows XP, Vista, 7, 8, 8.1, 10, 11
 
 - nPOP for iPhone
     https://apps.apple.com/app/npop-for-iphone/id368477936
@@ -51,7 +51,7 @@ Special thanks:
 
 --
 
-Copyright (C) 1996-2020 by Ohno Tomoaki. All rights reserved.
+Copyright (C) 1996-2021 by Ohno Tomoaki. All rights reserved.
 	https://www.nakka.com/
 
-11/11/2020
+12/28/2021
