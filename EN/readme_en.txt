@@ -1,4 +1,4 @@
-nPOP Ver 1.2.5
+nPOP Ver 1.2.6
 --
 
 [Introduction]
@@ -54,4 +54,4 @@ Special thanks:
 Copyright (C) 1996-2023 by Ohno Tomoaki. All rights reserved.
 	https://nakka.com/
 
-6/28/2023
+6/29/2023
