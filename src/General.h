@@ -29,7 +29,7 @@
 #include "ssl.h"
 
 /* Define */
-#define APP_NAME				TEXT("nPOP Ver 1.2.5")
+#define APP_NAME				TEXT("nPOP Ver 1.2.6")
 #define WINDOW_TITLE			TEXT("nPOP")
 #define KEY_NAME				TEXT("nPOP")
 

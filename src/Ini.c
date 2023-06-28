@@ -148,7 +148,7 @@ BOOL ini_read_setting(HWND hWnd)
 	op.view_font.charset = profile_get_int(GENERAL, TEXT("FontCharset"), char_set, app_path);
 
 	op.lv_font.name = profile_alloc_string(GENERAL, TEXT("LvFontName"), TEXT(""), app_path);
-	op.lv_font.size = Scale(profile_get_int(GENERAL, TEXT("LvFontSize"), 9, app_path));
+	op.lv_font.size = profile_get_int(GENERAL, TEXT("LvFontSize"), 9, app_path);
 	op.lv_font.weight = profile_get_int(GENERAL, TEXT("LvFontWeight"), 0, app_path);
 	op.lv_font.italic = profile_get_int(GENERAL, TEXT("LvFontItalic"), 0, app_path);
 	op.lv_font.charset = profile_get_int(GENERAL, TEXT("LvFontCharset"), char_set, app_path);
@@ -475,7 +475,7 @@ BOOL ini_save_setting(HWND hWnd, BOOL SaveMailFlag)
 	profile_write_int(GENERAL, TEXT("FontCharset"), op.view_font.charset, app_path);
 	
 	profile_write_string(GENERAL, TEXT("LvFontName"), op.lv_font.name, app_path);
-	profile_write_int(GENERAL, TEXT("LvFontSize"), UnScale(op.lv_font.size), app_path);
+	profile_write_int(GENERAL, TEXT("LvFontSize"), op.lv_font.size, app_path);
 	profile_write_int(GENERAL, TEXT("LvFontWeight"), op.lv_font.weight, app_path);
 	profile_write_int(GENERAL, TEXT("LvFontItalic"), op.lv_font.italic, app_path);
 	profile_write_int(GENERAL, TEXT("LvFontCharset"), op.lv_font.charset, app_path);
