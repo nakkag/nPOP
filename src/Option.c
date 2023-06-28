@@ -65,7 +65,7 @@ extern MAILBOX *AddressBox;
 extern TCHAR *FindStr;
 
 /* Local Function Prototypes */
-static int GetFontScale(HWND pWnd);
+static int GetFontScale();
 static void SetControlSize(HWND pWnd);
 static void SetControlFont(HWND pWnd);
 static LRESULT OptionNotifyProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -206,22 +206,14 @@ BOOL draw_theme_scroll(LPDRAWITEMSTRUCT lpDrawItem, UINT i, long hTheme)
 	return TRUE;
 }
 
-static int GetFontScale(HWND pWnd)
+/*
+ * GetFontScale - フォントの拡大率を取得
+ */
+static int GetFontScale()
 {
-	HDC hdc;
-	TEXTMETRIC lptm;
-	int FontHeight;
-
 	if (hListFont == NULL) return 0;
-
-	hdc = GetDC(pWnd);
-	SelectObject(hdc, hListFont);
-	GetTextMetrics(hdc, &lptm);
-	ReleaseDC(pWnd, hdc);
-	FontHeight = (lptm.tmHeight + lptm.tmExternalLeading);
-	return (FontHeight * 10) / 20;
+	return (op.lv_font.size * 10) / 9;
 }
-
 
 /*
  * SetControlSize - フォントサイズに合わせてコントロールのサイズを設定
@@ -236,11 +228,10 @@ static void SetControlSize(HWND pWnd)
 	RECT r, cr;
 	POINT pt;
 
-	scale = GetFontScale(pWnd);
+	scale = GetFontScale();
 	if (scale == 0) {
 		return;
 	}
-
 	GetWindowRect(pWnd, &r);
 	SetWindowPos(pWnd, NULL, 0, 0, (r.right - r.left) * scale / 10, (r.bottom - r.top) * scale / 10, SWP_NOMOVE | SWP_NOZORDER);
 
@@ -1881,7 +1872,7 @@ static BOOL CALLBACK CcListProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 		tpMailItem = (MAILITEM *)lParam;
 		SetWindowLong(hDlg, GWL_USERDATA, lParam);
 
-		fontScale = GetFontScale(hDlg);
+		fontScale = GetFontScale();
 		if (fontScale == 0) {
 			fontScale = 10;
 		}
@@ -2637,7 +2628,7 @@ BOOL CALLBACK MailPropProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		tpMailItem = (MAILITEM *)lParam;
 		SetWindowLong(hDlg, GWL_USERDATA, lParam);
 
-		fontScale = GetFontScale(hDlg);
+		fontScale = GetFontScale();
 		if (fontScale == 0) {
 			fontScale = 10;
 		}
