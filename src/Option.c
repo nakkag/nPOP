@@ -65,6 +65,8 @@ extern MAILBOX *AddressBox;
 extern TCHAR *FindStr;
 
 /* Local Function Prototypes */
+static int GetFontScale(HWND pWnd);
+static void SetControlSize(HWND pWnd);
 static void SetControlFont(HWND pWnd);
 static LRESULT OptionNotifyProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT DialogLvNotifyProc(HWND hWnd, LPARAM lParam, HWND hListView);
@@ -203,6 +205,56 @@ BOOL draw_theme_scroll(LPDRAWITEMSTRUCT lpDrawItem, UINT i, long hTheme)
 	_DrawThemeBackground((HTHEME)hTheme, lpDrawItem->hDC, SBP_ARROWBTN, state, &(lpDrawItem->rcItem), NULL);
 	return TRUE;
 }
+
+static int GetFontScale(HWND pWnd)
+{
+	HDC hdc;
+	TEXTMETRIC lptm;
+	int FontHeight;
+
+	if (hListFont == NULL) return 0;
+
+	hdc = GetDC(pWnd);
+	SelectObject(hdc, hListFont);
+	GetTextMetrics(hdc, &lptm);
+	ReleaseDC(pWnd, hdc);
+	FontHeight = (lptm.tmHeight + lptm.tmExternalLeading);
+	return (FontHeight * 10) / 20;
+}
+
+
+/*
+ * SetControlSize - フォントサイズに合わせてコントロールのサイズを設定
+ */
+static void SetControlSize(HWND pWnd)
+{
+	HWND hWnd;
+	HDC hdc;
+	TEXTMETRIC lptm;
+	int FontHeight;
+	int scale;
+	RECT r, cr;
+	POINT pt;
+
+	scale = GetFontScale(pWnd);
+	if (scale == 0) {
+		return;
+	}
+
+	GetWindowRect(pWnd, &r);
+	SetWindowPos(pWnd, NULL, 0, 0, (r.right - r.left) * scale / 10, (r.bottom - r.top) * scale / 10, SWP_NOMOVE | SWP_NOZORDER);
+
+	hWnd = GetWindow(pWnd, GW_CHILD);
+	do {
+		GetWindowRect(hWnd, &cr);
+		pt.x = cr.left;
+		pt.y = cr.top;
+		ScreenToClient(pWnd, &pt);
+		SetWindowPos(hWnd, NULL, pt.x * scale / 10, pt.y * scale / 10,
+			(cr.right - cr.left) * scale / 10, (cr.bottom - cr.top) * scale / 10, SWP_NOZORDER);
+	} while ((hWnd = GetWindow(hWnd, GW_HWNDNEXT)) != NULL);
+}
+
 /*
  * SetControlFont - コントロールのフォント設定
  */
@@ -215,14 +267,9 @@ static void SetControlFont(HWND pWnd)
 
 	hWnd = GetWindow(pWnd, GW_CHILD);
 	do {
-		GetClassName(hWnd, buf, BUF_SIZE);
-		if (lstrcmpi(buf, TEXT("Edit")) == 0 ||
-			lstrcmpi(buf, TEXT("ComboBox")) == 0 ||
-			lstrcmpi(buf, TEXT("ListBox")) == 0 ||
-			lstrcmpi(buf, WC_LISTVIEW) == 0) {
-			SendMessage(hWnd, WM_SETFONT, (WPARAM)hListFont, MAKELPARAM(TRUE,0));
-		}
+		SendMessage(hWnd, WM_SETFONT, (WPARAM)hListFont, MAKELPARAM(TRUE,0));
 	} while ((hWnd = GetWindow(hWnd, GW_HWNDNEXT)) != NULL);
+	SetControlSize(pWnd);
 }
 
 /*
@@ -377,8 +424,6 @@ static BOOL CALLBACK SetSSLProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 {
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		SetControlFont(hDlg);
-
 		SetWindowLong(hDlg, GWL_USERDATA, lParam);
 
 		SendDlgItemMessage(hDlg, IDC_COMBO_SSLTYPE, CB_ADDSTRING, 0, (LPARAM)STR_SSL_AUTO);
@@ -435,8 +480,6 @@ static BOOL CALLBACK PopSetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		/* コントロールの初期化 */
-		SetControlFont(hDlg);
-
 		SendDlgItemMessage(hDlg, IDC_EDIT_NAME, WM_SETTEXT, 0, (LPARAM)tpOptionMailBox->Name);
 		SendDlgItemMessage(hDlg, IDC_EDIT_SERVER, WM_SETTEXT, 0, (LPARAM)tpOptionMailBox->Server);
 		SetDlgItemInt(hDlg, IDC_EDIT_PORT, tpOptionMailBox->Port, FALSE);
@@ -521,8 +564,6 @@ static BOOL CALLBACK SetSmtpAuthProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM
 {
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		SetControlFont(hDlg);
-
 		SendDlgItemMessage(hDlg, IDC_CHECK_POP, BM_SETCHECK, !tpOptionMailBox->AuthUserPass, 0);
 
 		SendDlgItemMessage(hDlg, IDC_COMBO_AUTHTYPE, CB_ADDSTRING, 0, (LPARAM)STR_SMTP_AUTH_AUTO);
@@ -600,8 +641,6 @@ static BOOL CALLBACK SmtpSetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		/* コントロールの初期化 */
-		SetControlFont(hDlg);
-
 		SendDlgItemMessage(hDlg, IDC_EDIT_NAME, WM_SETTEXT, 0, (LPARAM)tpOptionMailBox->UserName);
 		SendDlgItemMessage(hDlg, IDC_EDIT_MAILADDRESS, WM_SETTEXT, 0, (LPARAM)tpOptionMailBox->MailAddress);
 		SendDlgItemMessage(hDlg, IDC_EDIT_SERVER, WM_SETTEXT, 0, (LPARAM)tpOptionMailBox->SmtpServer);
@@ -693,7 +732,6 @@ static BOOL CALLBACK MakeSetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		/* コントロールの初期化 */
-		SetControlFont(hDlg);
 		SendDlgItemMessage(hDlg, IDC_EDIT_SIG, WM_SETTEXT, 0, (LPARAM)tpOptionMailBox->Signature);
 		break;
 
@@ -760,8 +798,6 @@ static BOOL CALLBACK EditFilterProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM 
 
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		SetControlFont(hDlg);
-
 		SendDlgItemMessage(hDlg, IDC_COMBO_ACTION, CB_ADDSTRING, 0, (LPARAM)STR_FILTER_UNRECV);
 		SendDlgItemMessage(hDlg, IDC_COMBO_ACTION, CB_ADDSTRING, 0, (LPARAM)STR_FILTER_RECV);
 		SendDlgItemMessage(hDlg, IDC_COMBO_ACTION, CB_ADDSTRING, 0, (LPARAM)STR_FILTER_DOWNLOADMARK);
@@ -984,7 +1020,6 @@ static BOOL CALLBACK FilterSetProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 		init_themes();
 		hThemeUp = open_theme(GetDlgItem(hDlg, IDC_BUTTON_UP), L"SCROLLBAR");
 		hThemeDown = open_theme(GetDlgItem(hDlg, IDC_BUTTON_DOWN), L"SCROLLBAR");
-		SetControlFont(hDlg);
 
 		hListView = hLvFilter = GetDlgItem(hDlg, IDC_LIST_FILTER);
 		ListView_AddColumn(hListView, LVCFMT_LEFT, Scale(50), STR_FILTER_STATUS, 0);
@@ -1196,7 +1231,6 @@ static BOOL CALLBACK SetRecvOptionProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		/* コントロールの初期化 */
-		SetControlFont(hDlg);
 		SetDlgItemInt(hDlg, IDC_EDIT_READLINE, op.ListGetLine, FALSE);
 
 		SendDlgItemMessage(hDlg, IDC_CHECK_LISTDOWNLOAD, BM_SETCHECK, op.ListDownload, 0);
@@ -1259,8 +1293,6 @@ BOOL CALLBACK SetEncodeProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	switch (uMsg) {
 	case WM_INITDIALOG:
-		SetControlFont(hDlg);
-
 		SetWindowLong(hDlg, GWL_USERDATA, lParam);
 
 		charset_enum(GetDlgItem(hDlg, IDC_COMBO_CHARSET_H));
@@ -1352,7 +1384,6 @@ static BOOL CALLBACK SetSendOptionProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		/* コントロールの初期化 */
-		SetControlFont(hDlg);
 		SetDlgItemInt(hDlg, IDC_EDIT_BREAKCNT, op.WordBreakSize, FALSE);
 		SendDlgItemMessage(hDlg, IDC_CHECK_QBREAK, BM_SETCHECK, op.QuotationBreak, 0);
 
@@ -1398,7 +1429,6 @@ static BOOL CALLBACK SetMakeOptionProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPAR
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		/* コントロールの初期化 */
-		SetControlFont(hDlg);
 		SendDlgItemMessage(hDlg, IDC_CHECK_AUTOQUOT, BM_SETCHECK, op.AutoQuotation, 0);
 		SendDlgItemMessage(hDlg, IDC_CHECK_VIEWCLOSE, BM_SETCHECK, op.ViewClose, 0);
 		if (op.QuotationChar != NULL) {
@@ -1442,7 +1472,6 @@ static BOOL CALLBACK SetCheckOptionProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 	switch (uMsg) {
 	case WM_INITDIALOG:
 		/* コントロールの初期化 */
-		SetControlFont(hDlg);
 		SendDlgItemMessage(hDlg, IDC_CHECK_SHIWNEWMESSAGE, BM_SETCHECK, op.ShowNewMailMessgae, 0);
 		SendDlgItemMessage(hDlg, IDC_CHECK_SHIWNOMESSAGE, BM_SETCHECK, op.ShowNoMailMessage, 0);
 
@@ -1839,6 +1868,7 @@ static BOOL CALLBACK CcListProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 	int SelectItem;
 	int CcLen, BccLen;
 	int i, cnt;
+	int fontScale;
 
 	switch (uMsg) {
 	case WM_INITDIALOG:
@@ -1851,9 +1881,13 @@ static BOOL CALLBACK CcListProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 		tpMailItem = (MAILITEM *)lParam;
 		SetWindowLong(hDlg, GWL_USERDATA, lParam);
 
+		fontScale = GetFontScale(hDlg);
+		if (fontScale == 0) {
+			fontScale = 10;
+		}
 		hListView = GetDlgItem(hDlg, IDC_LIST_CC);
-		ListView_AddColumn(hListView, LVCFMT_LEFT, Scale(50), STR_CCLIST_TYPE, 0);
-		ListView_AddColumn(hListView, LVCFMT_LEFT, Scale(350), STR_CCLIST_MAILADDRESS, 1);
+		ListView_AddColumn(hListView, LVCFMT_LEFT, Scale(50 * fontScale / 10), STR_CCLIST_TYPE, 0);
+		ListView_AddColumn(hListView, LVCFMT_LEFT, Scale(350 * fontScale / 10), STR_CCLIST_MAILADDRESS, 1);
 		ListView_SetExtendedListViewStyle(hListView,
 			LVS_EX_FULLROWSELECT | LVS_EX_INFOTIP);
 		SendDlgItemMessage(hDlg, IDC_EDIT_MAILADDRESS, EM_LIMITTEXT, (WPARAM)BUF_SIZE - 2, 0);
@@ -2590,6 +2624,7 @@ BOOL CALLBACK MailPropProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	TCHAR *type;
 	TCHAR msg[BUF_SIZE];
 	int i, ItemIndex;
+	int fontScale;
 
 	switch (uMsg) {
 	case WM_INITDIALOG:
@@ -2602,9 +2637,13 @@ BOOL CALLBACK MailPropProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		tpMailItem = (MAILITEM *)lParam;
 		SetWindowLong(hDlg, GWL_USERDATA, lParam);
 
+		fontScale = GetFontScale(hDlg);
+		if (fontScale == 0) {
+			fontScale = 10;
+		}
 		hListView = GetDlgItem(hDlg, IDC_LIST_ADDRESS);
-		ListView_AddColumn(hListView, LVCFMT_LEFT, Scale(70), STR_MAILPROP_HEADER, 0);
-		ListView_AddColumn(hListView, LVCFMT_LEFT, Scale(330), STR_MAILPROP_MAILADDRESS, 1);
+		ListView_AddColumn(hListView, LVCFMT_LEFT, Scale(70 * fontScale / 10), STR_MAILPROP_HEADER, 0);
+		ListView_AddColumn(hListView, LVCFMT_LEFT, Scale(330 * fontScale / 10), STR_MAILPROP_MAILADDRESS, 1);
 		ListView_SetExtendedListViewStyle(hListView,
 			LVS_EX_FULLROWSELECT | LVS_EX_INFOTIP);
 
@@ -3255,6 +3294,7 @@ BOOL CALLBACK AttachNoticeProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 
 	switch (uMsg) {
 	case WM_INITDIALOG:
+		SetControlFont(hDlg);
 		SendDlgItemMessage(hDlg, IDC_RADIO_SAVE, BM_SETCHECK, BST_CHECKED, 0);
 
 		ai = (ATTACHINFO *)lParam;

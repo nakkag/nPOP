@@ -1,4 +1,4 @@
-nPOP Ver 1.2.4
+nPOP Ver 1.2.5
 --
 ■ はじめに
 このソフトはメールサーバ(POP3)上のメールを表示します。
@@ -622,6 +622,10 @@ npop_ini.txt を参照してください。
 
 ■ 更新履歴
 
+・Ver 1.2.4 -> Ver 1.2.5
+	・iniファイルでフォントサイズを変更するとダイアログの文字が見えにくく
+	　なるのを修正
+
 ・Ver 1.2.3 -> Ver 1.2.4
 	・起動時のコマンドラインが動作しなかったのを修正
 	・メールボックスのファイルが空の場合に空のメッセージができるのを修正
@@ -822,7 +826,7 @@ documentation and/or software.
 
 バグ、要望、質問は nakka@nakka.com までお願いします。
 
-Copyright (C) 1996-2021 by Ohno Tomoaki. All rights reserved.
-	https://www.nakka.com/
+Copyright (C) 1996-2023 by Ohno Tomoaki. All rights reserved.
+	https://nakka.com/
 
-2021/12/28
+2023/6/28
