@@ -3,7 +3,7 @@
  *
  * main.c
  *
- * Copyright (C) 1996-2020 by Ohno Tomoaki. All rights reserved.
+ * Copyright (C) 1996-2026 by Ohno Tomoaki. All rights reserved.
  *		https://www.nakka.com/
  *		nakka@nakka.com
  */
@@ -2541,7 +2541,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 #ifdef UNICODE
 				TEXT(" (UNICODE)")
 #endif
-				TEXT("\nCopyright (C) 1996-2023 by Ohno Tomoaki. All rights reserved.\n\n")
+				TEXT("\nCopyright (C) 1996-2026 by Ohno Tomoaki. All rights reserved.\n\n")
 				TEXT("WEB SITE: https://nakka.com/\nE-MAIL: nakka@nakka.com"),
 				TEXT("About"), MB_OK | MB_ICONINFORMATION);
 			break;

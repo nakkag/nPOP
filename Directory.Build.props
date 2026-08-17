@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+	<!-- 全プロジェクトの既定ツールセットと Windows SDK を固定 -->
+	<PlatformToolset>v143</PlatformToolset>
+	<WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+	<ClCompile>
+	  <!-- Windows 7 をターゲットにする定義 -->
+	  <PreprocessorDefinitions>_WIN32_WINNT=0x0601;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+	</ClCompile>
+  </ItemDefinitionGroup>
+</Project>
