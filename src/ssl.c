@@ -567,11 +567,11 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 	if (cbIoBufferLength > cbMessage) {
 		cbIoBufferLength = cbMessage;
 	}
-	if (_ssl_info->cbIoBuffer > cbIoBufferLength) {
-		if (_ssl_info->cbIoBuffer > cbMessage) {
+	if (_ssl_info->cbIoBuffer >= cbIoBufferLength) {
+		if (_ssl_info->cbIoBuffer >= cbMessage) {
 			return -1;
 		}
-		cbIoBufferLength = _ssl_info->cbIoBuffer;
+		cbIoBufferLength = cbMessage;
 	}
 	pbIoBuffer = mem_alloc(cbIoBufferLength);
 	if (pbIoBuffer == NULL) {
@@ -641,6 +641,9 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 			// データが小さく複合化できないため次の受信で処理する
 			_ssl_info->pbIoBuffer = pbIoBuffer;
 			_ssl_info->cbIoBuffer = cbIoBuffer;
+			if (length == 0) {
+				WSASetLastError(WSAEWOULDBLOCK);
+			}
 			return length;
 		}
 		if (scRet != SEC_E_OK && scRet != SEC_I_RENEGOTIATE) {
