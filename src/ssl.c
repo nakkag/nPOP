@@ -19,6 +19,7 @@
 #pragma comment(lib, "Crypt32.Lib")
 
 /* Define */
+#define SSL_WAIT_SEC			60
 
 /* Global Variables */
 
@@ -83,7 +84,7 @@ SECURITY_STATUS ssl_create_credentials(SSL* _ssl_info, DWORD dwProtocol)
 		NULL,
 		&(_ssl_info->hClientCreds),
 		&tsExpiry);
-	if (ret) {
+	if (ret == SEC_E_OK) {
 		_ssl_info->fCredsInitialized = TRUE;
 	}
 	return ret;
@@ -197,7 +198,17 @@ SECURITY_STATUS ssl_handshake(SOCKET Socket, SSL* _ssl_info)
 		FreeContextBuffer(OutBuffers[0].pvBuffer);
 		OutBuffers[0].pvBuffer = NULL;
 	}
-	return ssl_handshake_loop(Socket, _ssl_info, TRUE, &ExtraBuffer);
+	ExtraBuffer.pvBuffer = NULL;
+	ExtraBuffer.cbBuffer = 0;
+	scRet = ssl_handshake_loop(Socket, _ssl_info, TRUE, &ExtraBuffer);
+	if (scRet == SEC_E_OK) {
+		_ssl_info->fContextInitialized = TRUE;
+		if (ExtraBuffer.pvBuffer != NULL && ExtraBuffer.cbBuffer > 0) {
+			_ssl_info->pbIoBuffer = ExtraBuffer.pvBuffer;
+			_ssl_info->cbIoBuffer = ExtraBuffer.cbBuffer;
+		}
+	}
+	return scRet;
 }
 
 /*
@@ -212,6 +223,10 @@ SECURITY_STATUS ssl_handshake_loop(SOCKET Socket, SSL* _ssl_info, BOOL fDoInitia
 	SECURITY_STATUS scRet;
 	PUCHAR IoBuffer;
 	BOOL fDoRead;
+#ifdef WSAASYNC
+	struct timeval waittime;
+	fd_set rdps;
+#endif
 
 	dwSSPIFlags = ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT | ISC_REQ_CONFIDENTIALITY |
 		ISC_RET_EXTENDED_ERROR | ISC_REQ_ALLOCATE_MEMORY | ISC_REQ_STREAM;
@@ -222,6 +237,14 @@ SECURITY_STATUS ssl_handshake_loop(SOCKET Socket, SSL* _ssl_info, BOOL fDoInitia
 	}
 	fDoRead = fDoInitialRead;
 
+	if (_ssl_info->pbIoBuffer != NULL && _ssl_info->cbIoBuffer != 0) {
+		CopyMemory(IoBuffer, _ssl_info->pbIoBuffer, _ssl_info->cbIoBuffer);
+		cbIoBuffer = _ssl_info->cbIoBuffer;
+		mem_free(&(_ssl_info->pbIoBuffer));
+		_ssl_info->pbIoBuffer = NULL;
+		_ssl_info->cbIoBuffer = 0;
+	}
+
 	scRet = SEC_I_CONTINUE_NEEDED;
 	while (scRet == SEC_I_CONTINUE_NEEDED || scRet == SEC_E_INCOMPLETE_MESSAGE || scRet == SEC_I_INCOMPLETE_CREDENTIALS) {
 		if (0 == cbIoBuffer || scRet == SEC_E_INCOMPLETE_MESSAGE) {
@@ -230,6 +253,14 @@ SECURITY_STATUS ssl_handshake_loop(SOCKET Socket, SSL* _ssl_info, BOOL fDoInitia
 				if (cbData == SOCKET_ERROR) {
 #ifdef WSAASYNC
 					if (WSAGetLastError() == WSAEWOULDBLOCK) {
+						waittime.tv_sec = SSL_WAIT_SEC;
+						waittime.tv_usec = 0;
+						FD_ZERO(&rdps);
+						FD_SET(Socket, &rdps);
+						if (select(FD_SETSIZE, &rdps, (fd_set *)0, (fd_set *)0, &waittime) <= 0) {
+							scRet = SEC_E_INTERNAL_ERROR;
+							break;
+						}
 						continue;
 					}
 #endif
@@ -284,6 +315,8 @@ SECURITY_STATUS ssl_handshake_loop(SOCKET Socket, SSL* _ssl_info, BOOL fDoInitia
 				if (cbData == SOCKET_ERROR || cbData == 0) {
 					FreeContextBuffer(OutBuffers[0].pvBuffer);
 					DeleteSecurityContext(&(_ssl_info->hContext));
+					_ssl_info->fContextInitialized = FALSE;
+					mem_free(&IoBuffer);
 					return SEC_E_INTERNAL_ERROR;
 				}
 				FreeContextBuffer(OutBuffers[0].pvBuffer);
@@ -297,6 +330,7 @@ SECURITY_STATUS ssl_handshake_loop(SOCKET Socket, SSL* _ssl_info, BOOL fDoInitia
 			if (InBuffers[1].BufferType == SECBUFFER_EXTRA) {
 				pExtraData->pvBuffer = mem_alloc(InBuffers[1].cbBuffer);
 				if (pExtraData->pvBuffer == NULL) {
+					mem_free(&IoBuffer);
 					return SEC_E_INTERNAL_ERROR;
 				}
 
@@ -333,6 +367,7 @@ SECURITY_STATUS ssl_handshake_loop(SOCKET Socket, SSL* _ssl_info, BOOL fDoInitia
 	}
 	if (FAILED(scRet)) {
 		DeleteSecurityContext(&(_ssl_info->hContext));
+		_ssl_info->fContextInitialized = FALSE;
 	}
 	mem_free(&IoBuffer);
 	return scRet;
@@ -521,6 +556,8 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 	int i;
 	DWORD cbIoBufferLength;
 	PBYTE pbIoBuffer;
+	struct timeval waittime;
+	fd_set rdps;
 
 	scRet = QueryContextAttributes(&(_ssl_info->hContext), SECPKG_ATTR_STREAM_SIZES, &Sizes);
 	if (scRet != SEC_E_OK) {
@@ -528,6 +565,12 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 	}
 	cbIoBufferLength = Sizes.cbHeader + Sizes.cbMaximumMessage + Sizes.cbTrailer;
 	if (cbIoBufferLength > cbMessage) {
+		cbIoBufferLength = cbMessage;
+	}
+	if (_ssl_info->cbIoBuffer >= cbIoBufferLength) {
+		if (_ssl_info->cbIoBuffer >= cbMessage) {
+			return -1;
+		}
 		cbIoBufferLength = cbMessage;
 	}
 	pbIoBuffer = mem_alloc(cbIoBufferLength);
@@ -548,17 +591,33 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 				_ssl_info->cbIoBuffer = 0;
 			}
 			// データの受信
-			cbData = recv(Socket, pbIoBuffer + cbIoBuffer, cbIoBufferLength - cbIoBuffer, 0);
-			if (cbData == SOCKET_ERROR) {
-				if (length != 0) {
-					break;
+			cbData = 0;
+			if (cbIoBuffer > 0) {
+				waittime.tv_sec = 0;
+				waittime.tv_usec = 0;
+				FD_ZERO(&rdps);
+				FD_SET(Socket, &rdps);
+				if (select(FD_SETSIZE, &rdps, (fd_set *)0, (fd_set *)0, &waittime) > 0) {
+					cbData = recv(Socket, pbIoBuffer + cbIoBuffer, cbIoBufferLength - cbIoBuffer, 0);
 				}
-				mem_free(&pbIoBuffer);
-				return -1;
+			}
+			else {
+				cbData = recv(Socket, pbIoBuffer, cbIoBufferLength, 0);
+			}
+			if (cbData == SOCKET_ERROR) {
+				if (cbIoBuffer == 0) {
+					if (length != 0) {
+						break;
+					}
+					mem_free(&pbIoBuffer);
+					return -1;
+				}
 			}
 			else if (cbData == 0) {
-				mem_free(&pbIoBuffer);
-				return -1;
+				if (cbIoBuffer == 0) {
+					mem_free(&pbIoBuffer);
+					return -1;
+				}
 			}
 			else {
 				cbIoBuffer += cbData;
@@ -582,6 +641,9 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 			// データが小さく複合化できないため次の受信で処理する
 			_ssl_info->pbIoBuffer = pbIoBuffer;
 			_ssl_info->cbIoBuffer = cbIoBuffer;
+			if (length == 0) {
+				WSASetLastError(WSAEWOULDBLOCK);
+			}
 			return length;
 		}
 		if (scRet != SEC_E_OK && scRet != SEC_I_RENEGOTIATE) {
@@ -613,6 +675,18 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 		}
 		if (scRet == SEC_I_RENEGOTIATE) {
 			// 再度ハンドシェイクを行う
+			if (cbIoBuffer > 0) {
+				_ssl_info->pbIoBuffer = mem_alloc(cbIoBuffer);
+				if (_ssl_info->pbIoBuffer == NULL) {
+					mem_free(&pbIoBuffer);
+					return -1;
+				}
+				CopyMemory(_ssl_info->pbIoBuffer, pbIoBuffer, cbIoBuffer);
+				_ssl_info->cbIoBuffer = cbIoBuffer;
+				cbIoBuffer = 0;
+			}
+			ExtraBuffer.pvBuffer = NULL;
+			ExtraBuffer.cbBuffer = 0;
 			scRet = ssl_handshake_loop(Socket, _ssl_info, FALSE, &ExtraBuffer);
 			if (scRet != SEC_E_OK) {
 				mem_free(&pbIoBuffer);
@@ -621,6 +695,7 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 			if (ExtraBuffer.pvBuffer) {
 				MoveMemory(pbIoBuffer, ExtraBuffer.pvBuffer, ExtraBuffer.cbBuffer);
 				cbIoBuffer = ExtraBuffer.cbBuffer;
+				mem_free(&(ExtraBuffer.pvBuffer));
 			}
 		}
 	}

@@ -114,6 +114,7 @@ SOCKET connect_server(HWND hWnd, unsigned long ip_addr, unsigned short port, TCH
 #ifdef WSAASYNC
 	if (WSAAsyncSelect(soc, hWnd, WM_SOCK_SELECT, FD_CONNECT | FD_READ | FD_CLOSE) == SOCKET_ERROR) {
 		lstrcpy(ErrStr, STR_ERR_SOCK_EVENT);
+		closesocket(soc);
 		return -1;
 	}
 #endif
@@ -125,11 +126,13 @@ SOCKET connect_server(HWND hWnd, unsigned long ip_addr, unsigned short port, TCH
 		}
 #endif
 		lstrcpy(ErrStr, STR_ERR_SOCK_CONNECT);
+		closesocket(soc);
 		return -1;
 	}
 #ifndef WSAASYNC
 	// SSLの初期化
 	if (init_ssl(hWnd, soc, ErrStr) == -1) {
+		closesocket(soc);
 		return -1;
 	}
 #endif
@@ -146,6 +149,7 @@ int recv_proc(HWND hWnd, SOCKET soc)
 	char *p;
 	int buf_len;
 	int len;
+	SSL *ssl_org;
 
 	// 受信用バッファの確保
 	if (recv_buf == NULL && (recv_buf = (char *)mem_alloc(RECV_SIZE)) == NULL) {
@@ -185,6 +189,7 @@ int recv_proc(HWND hWnd, SOCKET soc)
 		buf_len += old_buf_len;
 	}
 	// 行単位に処理
+	ssl_org = ssl;
 	p = buf;
 	while (1) {
 		// 一行抽出
@@ -201,6 +206,11 @@ int recv_proc(HWND hWnd, SOCKET soc)
 		p += CRLF_LEN;
 		// ウィンドウに文字列を渡す
 		if (SendMessage(hWnd, WM_SOCK_RECV, len, (LPARAM)line) == FALSE) {
+			old_buf_len = 0;
+			return SELECT_SOC_SUCCEED;
+		}
+		if (ssl_org == NULL && ssl != NULL) {
+			old_buf_len = 0;
 			return SELECT_SOC_SUCCEED;
 		}
 	}
@@ -235,6 +245,10 @@ int recv_select(HWND hWnd, SOCKET soc)
 	struct timeval waittime;
 	fd_set rdps;
 	int selret;
+
+	if (ssl != NULL && ssl->cbIoBuffer > 0) {
+		return recv_proc(hWnd, soc);
+	}
 
 	waittime.tv_sec = TIMEOUT;
 	waittime.tv_usec = 0;
@@ -422,6 +436,11 @@ int init_ssl(const HWND hWnd, const SOCKET soc, TCHAR* ErrStr)
 	TCHAR msg[BUF_SIZE];
 	wsprintf(msg, TEXT("%s (%s)"), STR_STATUS_SSL_COMPLETE, buf);
 	SetSocStatusTextT(hWnd, msg);
+#ifdef WSAASYNC
+	if (ssl->cbIoBuffer > 0) {
+		PostMessage(hWnd, WM_SOCK_SELECT, (WPARAM)soc, MAKELPARAM(FD_READ, 0));
+	}
+#endif
 	return 0;
 }
 /* End of source */

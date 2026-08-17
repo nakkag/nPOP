@@ -1,4 +1,4 @@
-nPOP Ver 1.2.6
+nPOP Ver 1.2.7
 --
 ■ はじめに
 このソフトはメールサーバ(POP3)上のメールを表示します。
@@ -28,7 +28,7 @@ nPOP Ver 1.2.6
     ・TLS/SSL/STARTTLS通信
 
 ■ 動作環境
-	Windows XP, Vista, 7, 8, 8.1, 10, 11
+	Windows 7, 8, 8.1, 10, 11
 
 	nPOP for iPhone
 	    https://apps.apple.com/jp/app/npop-for-iphone/id368477936
@@ -622,6 +622,9 @@ npop_ini.txt を参照してください。
 
 ■ 更新履歴
 
+・Ver 1.2.6 -> Ver 1.2.7
+	・SSL接続完了後に受信が進まない不具合を修正
+
 ・Ver 1.2.5 -> Ver 1.2.6
 	・テキストとリストのフォントサイズが同じサイズとなるように修正
 	・高DPIで拡大しているときにダイアログが大きくなりすぎるのを修正
@@ -831,7 +834,7 @@ documentation and/or software.
 
 バグ、要望、質問は nakka@nakka.com までお願いします。
 
-Copyright (C) 1996-2023 by Ohno Tomoaki. All rights reserved.
+Copyright (C) 1996-2026 by Ohno Tomoaki. All rights reserved.
 	https://nakka.com/
 
-2023/6/29
+2026/8/17
