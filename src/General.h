@@ -3,7 +3,7 @@
  *
  * General.h
  *
- * Copyright (C) 1996-2020 by Ohno Tomoaki. All rights reserved.
+ * Copyright (C) 1996-2026 by Ohno Tomoaki. All rights reserved.
  *		https://www.nakka.com/
  *		nakka@nakka.com
  */
@@ -29,7 +29,7 @@
 #include "ssl.h"
 
 /* Define */
-#define APP_NAME				TEXT("nPOP Ver 1.2.6")
+#define APP_NAME				TEXT("nPOP Ver 1.2.7")
 #define WINDOW_TITLE			TEXT("nPOP")
 #define KEY_NAME				TEXT("nPOP")
 
