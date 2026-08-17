@@ -315,6 +315,7 @@ SECURITY_STATUS ssl_handshake_loop(SOCKET Socket, SSL* _ssl_info, BOOL fDoInitia
 				if (cbData == SOCKET_ERROR || cbData == 0) {
 					FreeContextBuffer(OutBuffers[0].pvBuffer);
 					DeleteSecurityContext(&(_ssl_info->hContext));
+					_ssl_info->fContextInitialized = FALSE;
 					mem_free(&IoBuffer);
 					return SEC_E_INTERNAL_ERROR;
 				}
@@ -366,6 +367,7 @@ SECURITY_STATUS ssl_handshake_loop(SOCKET Socket, SSL* _ssl_info, BOOL fDoInitia
 	}
 	if (FAILED(scRet)) {
 		DeleteSecurityContext(&(_ssl_info->hContext));
+		_ssl_info->fContextInitialized = FALSE;
 	}
 	mem_free(&IoBuffer);
 	return scRet;
@@ -564,6 +566,12 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 	cbIoBufferLength = Sizes.cbHeader + Sizes.cbMaximumMessage + Sizes.cbTrailer;
 	if (cbIoBufferLength > cbMessage) {
 		cbIoBufferLength = cbMessage;
+	}
+	if (_ssl_info->cbIoBuffer > cbIoBufferLength) {
+		if (_ssl_info->cbIoBuffer > cbMessage) {
+			return -1;
+		}
+		cbIoBufferLength = _ssl_info->cbIoBuffer;
 	}
 	pbIoBuffer = mem_alloc(cbIoBufferLength);
 	if (pbIoBuffer == NULL) {
