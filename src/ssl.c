@@ -606,13 +606,10 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 	if (cbIoBufferLength > cbMessage) {
 		cbIoBufferLength = cbMessage;
 	}
-	if (_ssl_info->cbIoBuffer >= cbIoBufferLength) {
-		if (_ssl_info->cbIoBuffer >= cbMessage) {
-			return -1;
-		}
-		cbIoBufferLength = cbMessage;
+	if (_ssl_info->cbIoBuffer > IO_BUFFER_SIZE) {
+		return -1;
 	}
-	pbIoBuffer = mem_alloc(cbIoBufferLength);
+	pbIoBuffer = mem_alloc(IO_BUFFER_SIZE);
 	if (pbIoBuffer == NULL) {
 		return -1;
 	}
@@ -632,12 +629,14 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 			// データの受信
 			cbData = 0;
 			if (cbIoBuffer > 0) {
-				waittime.tv_sec = 0;
-				waittime.tv_usec = 0;
-				FD_ZERO(&rdps);
-				FD_SET(Socket, &rdps);
-				if (select(FD_SETSIZE, &rdps, (fd_set *)0, (fd_set *)0, &waittime) > 0) {
-					cbData = recv(Socket, pbIoBuffer + cbIoBuffer, cbIoBufferLength - cbIoBuffer, 0);
+				if (cbIoBuffer < cbIoBufferLength) {
+					waittime.tv_sec = 0;
+					waittime.tv_usec = 0;
+					FD_ZERO(&rdps);
+					FD_SET(Socket, &rdps);
+					if (select(FD_SETSIZE, &rdps, (fd_set *)0, (fd_set *)0, &waittime) > 0) {
+						cbData = recv(Socket, pbIoBuffer + cbIoBuffer, cbIoBufferLength - cbIoBuffer, 0);
+					}
 				}
 			}
 			else {
@@ -661,6 +660,17 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 			else {
 				cbIoBuffer += cbData;
 			}
+		}
+
+		if (length > 0 && length + Sizes.cbMaximumMessage > cbMessage) {
+			_ssl_info->pbIoBuffer = mem_alloc(cbIoBuffer);
+			if (_ssl_info->pbIoBuffer == NULL) {
+				mem_free(&pbIoBuffer);
+				return -1;
+			}
+			CopyMemory(_ssl_info->pbIoBuffer, pbIoBuffer, cbIoBuffer);
+			_ssl_info->cbIoBuffer = cbIoBuffer;
+			break;
 		}
 
 		// 複合化
