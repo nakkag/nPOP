@@ -149,6 +149,7 @@ int recv_proc(HWND hWnd, SOCKET soc)
 	char *p;
 	int buf_len;
 	int len;
+	SSL *ssl_org;
 
 	// 受信用バッファの確保
 	if (recv_buf == NULL && (recv_buf = (char *)mem_alloc(RECV_SIZE)) == NULL) {
@@ -188,6 +189,7 @@ int recv_proc(HWND hWnd, SOCKET soc)
 		buf_len += old_buf_len;
 	}
 	// 行単位に処理
+	ssl_org = ssl;
 	p = buf;
 	while (1) {
 		// 一行抽出
@@ -204,6 +206,11 @@ int recv_proc(HWND hWnd, SOCKET soc)
 		p += CRLF_LEN;
 		// ウィンドウに文字列を渡す
 		if (SendMessage(hWnd, WM_SOCK_RECV, len, (LPARAM)line) == FALSE) {
+			old_buf_len = 0;
+			return SELECT_SOC_SUCCEED;
+		}
+		if (ssl_org == NULL && ssl != NULL) {
+			old_buf_len = 0;
 			return SELECT_SOC_SUCCEED;
 		}
 	}
