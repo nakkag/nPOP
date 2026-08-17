@@ -57,13 +57,77 @@ void ssl_free(SSL* _ssl_info)
 	}
 }
 
+static SECURITY_STATUS ssl_acquire_credentials(SSL* _ssl_info, DWORD dwProtocol, PCCERT_CONTEXT* paCred, DWORD cCreds, BOOL fFirst, CredHandle* phCreds)
+{
+	TimeStamp tsExpiry;
+	SECURITY_STATUS ret;
+	DWORD dwEnabled, dwDisabled, dwFlags;
+	DWORD dwAllProtocols = SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT |
+		SP_PROT_TLS1_0_CLIENT | SP_PROT_TLS1_1_CLIENT |
+		SP_PROT_TLS1_2_CLIENT | SP_PROT_TLS1_3_CLIENT;
+
+	if (dwProtocol == 0 || dwProtocol == SP_PROT_ALL) {
+		dwDisabled = 0;
+		dwEnabled = SP_PROT_TLS1_0_CLIENT | SP_PROT_TLS1_1_CLIENT | SP_PROT_TLS1_2_CLIENT;
+	} else {
+		dwDisabled = dwAllProtocols & ~dwProtocol;
+		dwEnabled = dwProtocol;
+	}
+	dwFlags = SCH_CRED_NO_DEFAULT_CREDS | SCH_CRED_MANUAL_CRED_VALIDATION;
+	if (!(dwEnabled & (SP_PROT_SSL2_CLIENT | SP_PROT_SSL3_CLIENT))) {
+		dwFlags |= SCH_USE_STRONG_CRYPTO;
+	}
+
+	if (fFirst == TRUE || _ssl_info->fUseSchCredentials == TRUE) {
+		ZeroMemory(&(_ssl_info->TlsParameters), sizeof(NPOP_TLS_PARAMETERS));
+		_ssl_info->TlsParameters.grbitDisabledProtocols = dwDisabled;
+		ZeroMemory(&(_ssl_info->SchCredentials), sizeof(NPOP_SCH_CREDENTIALS));
+		_ssl_info->SchCredentials.dwVersion = SCH_CREDENTIALS_VERSION;
+		_ssl_info->SchCredentials.cCreds = cCreds;
+		_ssl_info->SchCredentials.paCred = paCred;
+		_ssl_info->SchCredentials.dwFlags = dwFlags;
+		_ssl_info->SchCredentials.cTlsParameters = 1;
+		_ssl_info->SchCredentials.pTlsParameters = &(_ssl_info->TlsParameters);
+		ret = AcquireCredentialsHandle(NULL,
+			UNISP_NAME,
+			SECPKG_CRED_OUTBOUND,
+			NULL,
+			&(_ssl_info->SchCredentials),
+			NULL,
+			NULL,
+			phCreds,
+			&tsExpiry);
+		if (ret == SEC_E_OK) {
+			_ssl_info->fUseSchCredentials = TRUE;
+			return ret;
+		}
+		if (fFirst == FALSE) {
+			return ret;
+		}
+	}
+	_ssl_info->fUseSchCredentials = FALSE;
+	ZeroMemory(&(_ssl_info->SchannelCred), sizeof(SCHANNEL_CRED));
+	_ssl_info->SchannelCred.dwVersion = SCHANNEL_CRED_VERSION;
+	_ssl_info->SchannelCred.grbitEnabledProtocols = dwEnabled;
+	_ssl_info->SchannelCred.cCreds = cCreds;
+	_ssl_info->SchannelCred.paCred = paCred;
+	_ssl_info->SchannelCred.dwFlags = dwFlags;
+	return AcquireCredentialsHandle(NULL,
+		UNISP_NAME,
+		SECPKG_CRED_OUTBOUND,
+		NULL,
+		&(_ssl_info->SchannelCred),
+		NULL,
+		NULL,
+		phCreds,
+		&tsExpiry);
+}
+
 /*
  * ssl_create_credentials - クライアントの資格情報を作成
  */
 SECURITY_STATUS ssl_create_credentials(SSL* _ssl_info, DWORD dwProtocol)
 {
-	TimeStamp tsExpiry;
-
 	if (_ssl_info->hMyCertStore == NULL) {
 		_ssl_info->hMyCertStore = CertOpenSystemStore(0, TEXT("MY"));
 		if (!_ssl_info->hMyCertStore) {
@@ -71,19 +135,7 @@ SECURITY_STATUS ssl_create_credentials(SSL* _ssl_info, DWORD dwProtocol)
 		}
 	}
 
-	ZeroMemory(&(_ssl_info->SchannelCred), sizeof(SCHANNEL_CRED));
-	_ssl_info->SchannelCred.dwVersion = SCHANNEL_CRED_VERSION;
-	_ssl_info->SchannelCred.grbitEnabledProtocols = dwProtocol;
-	_ssl_info->SchannelCred.dwFlags = SCH_CRED_NO_DEFAULT_CREDS | SCH_CRED_MANUAL_CRED_VALIDATION;
-	SECURITY_STATUS ret = AcquireCredentialsHandle(NULL,
-		UNISP_NAME,
-		SECPKG_CRED_OUTBOUND,
-		NULL,
-		&(_ssl_info->SchannelCred),
-		NULL,
-		NULL,
-		&(_ssl_info->hClientCreds),
-		&tsExpiry);
+	SECURITY_STATUS ret = ssl_acquire_credentials(_ssl_info, dwProtocol, NULL, 0, TRUE, &(_ssl_info->hClientCreds));
 	if (ret == SEC_E_OK) {
 		_ssl_info->fCredsInitialized = TRUE;
 	}
@@ -100,7 +152,6 @@ static void ssl_new_client_credentials(SSL* _ssl_info)
 	PCCERT_CHAIN_CONTEXT pChainContext;
 	CERT_CHAIN_FIND_BY_ISSUER_PARA FindByIssuerPara;
 	PCCERT_CONTEXT pCertContext;
-	TimeStamp tsExpiry;
 	SECURITY_STATUS Status;
 
 	if (QueryContextAttributes(&(_ssl_info->hContext), SECPKG_ATTR_ISSUER_LIST_EX, (PVOID)&IssuerListInfo) != SEC_E_OK) {
@@ -127,19 +178,7 @@ static void ssl_new_client_credentials(SSL* _ssl_info)
 
 		pCertContext = pChainContext->rgpChain[0]->rgpElement[0]->pCertContext;
 
-		_ssl_info->SchannelCred.dwVersion = SCHANNEL_CRED_VERSION;
-		_ssl_info->SchannelCred.cCreds = 1;
-		_ssl_info->SchannelCred.paCred = &pCertContext;
-
-		Status = AcquireCredentialsHandle(NULL,
-			UNISP_NAME,
-			SECPKG_CRED_OUTBOUND,
-			NULL,
-			&(_ssl_info->SchannelCred),
-			NULL,
-			NULL,
-			&hCreds,
-			&tsExpiry);
+		Status = ssl_acquire_credentials(_ssl_info, _ssl_info->ssl_type, &pCertContext, 1, FALSE, &hCreds);
 		if (Status != SEC_E_OK) {
 			continue;
 		}

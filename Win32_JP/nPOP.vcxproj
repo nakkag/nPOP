@@ -130,7 +130,6 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <OutputFile>.\Release\nPOP.exe</OutputFile>
-      <AdditionalLibraryDirectories>G:\openssl\slib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;comctl32.lib;wsock32.lib;Winmm.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
@@ -258,7 +257,6 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <OutputFile>.\Release_Unicode\nPOP.exe</OutputFile>
-      <AdditionalLibraryDirectories>G:\openssl\slib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;comctl32.lib;wsock32.lib;Winmm.lib;imm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
