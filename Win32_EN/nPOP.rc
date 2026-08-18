@@ -127,7 +127,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Sort by icon",               ID_MENUITEM_ICONSORT
         MENUITEM SEPARATOR
-        MENUITEM "&Initialise...",              ID_MENUITEM_LISTINIT
+        MENUITEM "&Initialise download position...", ID_MENUITEM_LISTINIT
     END
     POPUP "&Connect"
     BEGIN
@@ -176,7 +176,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "&Password:",IDC_STATIC_TITLE,5,5,125,10
     EDITTEXT        IDC_EDIT_PASS,5,20,124,15,ES_PASSWORD | ES_AUTOHSCROLL
-    CONTROL         "Do not &save password",IDC_CHECK_TMPPASS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,40,125,10
+    CONTROL         "&Remember password temporarily",IDC_CHECK_TMPPASS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,40,125,10
     DEFPUSHBUTTON   "OK",IDOK,15,54,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,70,54,50,14
 END
@@ -295,9 +295,11 @@ BEGIN
     CONTROL         "&Quoted lines do not word wrap",IDC_CHECK_QBREAK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,25,135,10
     CONTROL         "Send '&Message-Id'",IDC_CHECK_SENDMESSAGEID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,40,110,10
     CONTROL         "Send '&Date'",IDC_CHECK_SENDDATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,54,110,10
+    CONTROL         "Send attachment file &names in MIME ""B"" encoding",IDC_CHECK_ENCODETYPE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,68,200,10
     CONTROL         "Show '&Outbox' on 'Save to Outbox'",IDC_CHECK_SELECTSENDBOX,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,68,160,10
-    PUSHBUTTON      "&Encoding...",IDC_BUTTON_ENCODE,5,90,80,15
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,82,160,10
+    PUSHBUTTON      "&Encoding...",IDC_BUTTON_ENCODE,5,102,80,15
 END
 
 IDD_DIALOG_CC DIALOGEX 0, 0, 255, 177
@@ -347,7 +349,7 @@ BEGIN
     LTEXT           "min",IDC_STATIC,112,82,20,10
     CONTROL         "Check e-mail on star&t",IDC_CHECK_STARTCHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,94,110,10
     CONTROL         "Check &after update",IDC_CHECK_CHECKAFTERUPDATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,107,75,10
-    CONTROL         "Ignore &recieve error",IDC_CHECK_IGNOREERROR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,120,110,10
+    CONTROL         "Ignore &receive error",IDC_CHECK_IGNOREERROR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,120,110,10
     CONTROL         "&Ignore send error",IDC_CHECK_SENDIGNOREERROR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,133,110,10
 END
 
@@ -401,7 +403,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,140,10
     CONTROL         "Keep System Tray icon when &closed",IDC_CHECK_CLOSEHIDE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,37,140,10
-    CONTROL         "&Scan all acounts when seeking unread mail",IDC_CHECK_MOVEALLMAILBOX,
+    CONTROL         "&Scan all accounts when seeking unread mail",IDC_CHECK_MOVEALLMAILBOX,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,51,190,10
     GROUPBOX        "Password setup",IDC_STATIC,5,75,205,65
     CONTROL         "Password &required to open program",IDC_CHECK_STARTPASS,
@@ -453,10 +455,10 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Initialise"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    LTEXT           "When checking mail download:",IDC_STATIC,10,10,185,15
-    CONTROL         "&New mail only",IDC_RADIO_FIRSTGET,"Button",BS_AUTORADIOBUTTON,15,30,120,10
-    CONTROL         "&Mail from item number:",IDC_RADIO_SETGET,"Button",BS_AUTORADIOBUTTON,15,46,95,10
-    EDITTEXT        IDC_EDIT_GETNUM,115,45,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Reset the position where downloading starts:",IDC_STATIC,10,10,185,15
+    CONTROL         "&Download from the beginning",IDC_RADIO_FIRSTGET,"Button",BS_AUTORADIOBUTTON,15,30,150,10
+    CONTROL         "Start from &message number:",IDC_RADIO_SETGET,"Button",BS_AUTORADIOBUTTON,15,46,110,10
+    EDITTEXT        IDC_EDIT_GETNUM,130,45,30,12,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,10,70,224,1
     LTEXT           "Number of mail items:",IDC_STATIC,10,76,82,14
     LTEXT           "",IDC_STATIC_MAILCNT,119,76,115,13
@@ -484,9 +486,9 @@ CAPTION "Address information"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     CONTROL         "List1",IDC_LIST_ADDRESS,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,7,257,110
-    DEFPUSHBUTTON   "&New mail",IDC_BUTTON_NEW,75,123,55,14
-    PUSHBUTTON      "&Reply",IDC_BUTTON_REPLY,135,123,55,14
-    PUSHBUTTON      "&Address book",IDC_BUTTON_ADDADDRESS,195,123,69,14
+    DEFPUSHBUTTON   "&New mail",IDC_BUTTON_NEW,55,123,55,14
+    PUSHBUTTON      "&Reply",IDC_BUTTON_REPLY,115,123,55,14
+    PUSHBUTTON      "&Add to address book",IDC_BUTTON_ADDADDRESS,175,123,89,14
     PUSHBUTTON      "Close",IDCANCEL,209,143,55,14
 END
 
@@ -498,7 +500,7 @@ BEGIN
     LTEXT           "&Find text:",IDC_STATIC,5,12,45,10
     EDITTEXT        IDC_EDIT_FIND,60,10,142,14,ES_AUTOHSCROLL
     CONTROL         "Match &case",IDC_CHECK_CASE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,35,190,10
-    CONTROL         "Search &all mail in folder",IDC_CHECK_ALL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,49,130,10
+    CONTROL         "Search &all mail",IDC_CHECK_ALL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,49,130,10
     CONTROL         "Include &subject in search",IDC_CHECK_SUBJECT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,63,130,10
     DEFPUSHBUTTON   "&Find next",IDOK,208,10,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,208,28,50,14
@@ -509,7 +511,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "SMTP-AUTH"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    CONTROL         "U&se POP3 option",IDC_CHECK_POP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,10,135,10
+    CONTROL         "U&se the POP3 username and password",IDC_CHECK_POP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,10,180,10
     LTEXT           "&Username:",IDC_STATIC,10,32,35,10
     EDITTEXT        IDC_EDIT_USER,50,30,140,12,ES_AUTOHSCROLL
     LTEXT           "&Password:",IDC_STATIC,10,48,35,10
@@ -527,7 +529,7 @@ FONT 8, "MS Sans Serif"
 BEGIN
     LTEXT           "&SSL Type:",IDC_STATIC,10,5,80,10
     COMBOBOX        IDC_COMBO_SSLTYPE,10,15,105,95,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Verify",IDC_CHECK_VERIFY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,34,100,10
+    CONTROL         "&Verify server certificate",IDC_CHECK_VERIFY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,34,110,10
     DEFPUSHBUTTON   "OK",IDOK,10,50,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,65,50,50,14
 END
