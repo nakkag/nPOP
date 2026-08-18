@@ -169,16 +169,16 @@ END
 // Dialog
 //
 
-IDD_DIALOG_INPUTPASS DIALOG 0, 0, 135, 73
+IDD_DIALOG_INPUTPASS DIALOG 0, 0, 145, 73
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "nPOP"
 FONT 8, "MS Sans Serif"
 BEGIN
-    LTEXT           "&Password:",IDC_STATIC_TITLE,5,5,125,10
-    EDITTEXT        IDC_EDIT_PASS,5,20,124,15,ES_PASSWORD | ES_AUTOHSCROLL
-    CONTROL         "&Remember password temporarily",IDC_CHECK_TMPPASS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,40,125,10
-    DEFPUSHBUTTON   "OK",IDOK,15,54,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,70,54,50,14
+    LTEXT           "&Password:",IDC_STATIC_TITLE,5,5,135,10
+    EDITTEXT        IDC_EDIT_PASS,5,20,134,15,ES_PASSWORD | ES_AUTOHSCROLL
+    CONTROL         "&Remember password temporarily",IDC_CHECK_TMPPASS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,40,135,10
+    DEFPUSHBUTTON   "OK",IDOK,20,54,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,75,54,50,14
 END
 
 IDD_DIALOG_SETSEND DIALOGEX 0, 0, 314, 112
@@ -296,7 +296,7 @@ BEGIN
     CONTROL         "Send '&Message-Id'",IDC_CHECK_SENDMESSAGEID,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,40,110,10
     CONTROL         "Send '&Date'",IDC_CHECK_SENDDATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,54,110,10
     CONTROL         "Send attachment file &names in MIME ""B"" encoding",IDC_CHECK_ENCODETYPE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,68,200,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,68,210,10
     CONTROL         "Show '&Outbox' on 'Save to Outbox'",IDC_CHECK_SELECTSENDBOX,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,82,160,10
     PUSHBUTTON      "&Encoding...",IDC_BUTTON_ENCODE,5,102,80,15
@@ -455,10 +455,10 @@ STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Initialise"
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    LTEXT           "Reset the position where downloading starts:",IDC_STATIC,10,10,185,15
+    LTEXT           "Reset the position where downloading starts:",IDC_STATIC,10,10,210,15
     CONTROL         "&Download from the beginning",IDC_RADIO_FIRSTGET,"Button",BS_AUTORADIOBUTTON,15,30,150,10
-    CONTROL         "Start from &message number:",IDC_RADIO_SETGET,"Button",BS_AUTORADIOBUTTON,15,46,110,10
-    EDITTEXT        IDC_EDIT_GETNUM,130,45,30,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Start from &message number:",IDC_RADIO_SETGET,"Button",BS_AUTORADIOBUTTON,15,46,120,10
+    EDITTEXT        IDC_EDIT_GETNUM,140,45,30,12,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,10,70,224,1
     LTEXT           "Number of mail items:",IDC_STATIC,10,76,82,14
     LTEXT           "",IDC_STATIC_MAILCNT,119,76,115,13
