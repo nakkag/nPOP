@@ -624,6 +624,7 @@ npop_ini.txt を参照してください。
 
 ・Ver 1.2.6 -> Ver 1.2.7
 	・SSL接続完了後に受信が進まない不具合を修正
+	・TLS1.3に対応
 
 ・Ver 1.2.5 -> Ver 1.2.6
 	・テキストとリストのフォントサイズが同じサイズとなるように修正
@@ -837,4 +838,4 @@ documentation and/or software.
 Copyright (C) 1996-2026 by Ohno Tomoaki. All rights reserved.
 	https://nakka.com/
 
-2026/8/17
+2026/8/18

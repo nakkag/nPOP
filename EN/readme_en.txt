@@ -38,6 +38,12 @@ of new e-mail.
 - nPOP for iPhone
     https://apps.apple.com/app/npop-for-iphone/id368477936
 
+[Update History]
+
+・Ver 1.2.6 -> Ver 1.2.7
+    ・Fixed an issue where reception would not proceed after an SSL connection was established
+    ・Added support for TLS 1.3
+
 --
 
 Special thanks:
@@ -54,4 +60,4 @@ Special thanks:
 Copyright (C) 1996-2026 by Ohno Tomoaki. All rights reserved.
 	https://nakka.com/
 
-8/17/2026
+8/18/2026
