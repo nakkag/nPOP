@@ -104,6 +104,8 @@ SOCKET connect_server(HWND hWnd, unsigned long ip_addr, unsigned short port, TCH
 	soc = socket(PF_INET, SOCK_STREAM, 0);
 	if (soc == INVALID_SOCKET) {
 		lstrcpy(ErrStr, STR_ERR_SOCK_CREATESOCKET);
+		ssl_free(ssl);
+		ssl = NULL;
 		return -1;
 	}
 	// Ú‘±æ‚ÌÝ’è
@@ -115,6 +117,8 @@ SOCKET connect_server(HWND hWnd, unsigned long ip_addr, unsigned short port, TCH
 	if (WSAAsyncSelect(soc, hWnd, WM_SOCK_SELECT, FD_CONNECT | FD_READ | FD_CLOSE) == SOCKET_ERROR) {
 		lstrcpy(ErrStr, STR_ERR_SOCK_EVENT);
 		closesocket(soc);
+		ssl_free(ssl);
+		ssl = NULL;
 		return -1;
 	}
 #endif
@@ -127,12 +131,16 @@ SOCKET connect_server(HWND hWnd, unsigned long ip_addr, unsigned short port, TCH
 #endif
 		lstrcpy(ErrStr, STR_ERR_SOCK_CONNECT);
 		closesocket(soc);
+		ssl_free(ssl);
+		ssl = NULL;
 		return -1;
 	}
 #ifndef WSAASYNC
 	// SSL‚Ì‰Šú‰»
 	if (init_ssl(hWnd, soc, ErrStr) == -1) {
 		closesocket(soc);
+		ssl_free(ssl);
+		ssl = NULL;
 		return -1;
 	}
 #endif
@@ -232,6 +240,11 @@ int recv_proc(HWND hWnd, SOCKET soc)
 			old_buf = buf;
 		}
 	}
+#ifdef WSAASYNC
+	if (ssl != NULL && ssl->cbIoBuffer > 0) {
+		PostMessage(hWnd, WM_SOCK_SELECT, (WPARAM)soc, MAKELPARAM(FD_READ, 0));
+	}
+#endif
 	return SELECT_SOC_SUCCEED;
 }
 

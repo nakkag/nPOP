@@ -27,6 +27,52 @@
 #define SP_PROT_TLS1_3_CLIENT           0x00002000
 #endif
 
+#ifndef SCH_USE_STRONG_CRYPTO
+#define SCH_USE_STRONG_CRYPTO           0x00400000
+#endif
+
+#ifndef SCH_CREDENTIALS_VERSION
+#define SCH_CREDENTIALS_VERSION         0x00000005
+#endif
+
+typedef struct _NPOP_UNICODE_STRING {
+	USHORT Length;
+	USHORT MaximumLength;
+	PWSTR Buffer;
+} NPOP_UNICODE_STRING, *PNPOP_UNICODE_STRING;
+
+typedef struct _NPOP_CRYPTO_SETTINGS {
+	DWORD eAlgorithmUsage;
+	NPOP_UNICODE_STRING strCngAlgId;
+	DWORD cChainingModes;
+	PNPOP_UNICODE_STRING rgstrChainingModes;
+	DWORD dwMinBitLength;
+	DWORD dwMaxBitLength;
+} NPOP_CRYPTO_SETTINGS, *PNPOP_CRYPTO_SETTINGS;
+
+typedef struct _NPOP_TLS_PARAMETERS {
+	DWORD cAlpnIds;
+	PNPOP_UNICODE_STRING rgstrAlpnIds;
+	DWORD grbitDisabledProtocols;
+	DWORD cDisabledCrypto;
+	PNPOP_CRYPTO_SETTINGS pDisabledCrypto;
+	DWORD dwTlsParametersFlags;
+} NPOP_TLS_PARAMETERS, *PNPOP_TLS_PARAMETERS;
+
+typedef struct _NPOP_SCH_CREDENTIALS {
+	DWORD dwVersion;
+	DWORD dwCredFormat;
+	DWORD cCreds;
+	PCCERT_CONTEXT *paCred;
+	HCERTSTORE hRootStore;
+	DWORD cMappers;
+	struct _HMAPPER **aphMappers;
+	DWORD dwSessionLifespan;
+	DWORD dwFlags;
+	DWORD cTlsParameters;
+	PNPOP_TLS_PARAMETERS pTlsParameters;
+} NPOP_SCH_CREDENTIALS, *PNPOP_SCH_CREDENTIALS;
+
 /* Struct */
 typedef struct _SSL {
 	CredHandle hClientCreds;
@@ -34,6 +80,9 @@ typedef struct _SSL {
 
 	HCERTSTORE hMyCertStore;
 	SCHANNEL_CRED SchannelCred;
+	NPOP_SCH_CREDENTIALS SchCredentials;
+	NPOP_TLS_PARAMETERS TlsParameters;
+	BOOL fUseSchCredentials;
 
 	BOOL fCredsInitialized;
 	BOOL fContextInitialized;
