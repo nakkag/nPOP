@@ -376,12 +376,13 @@ void DrawScrollControl(LPDRAWITEMSTRUCT lpDrawItem, UINT i)
 
 static int ssl_table[][2] = {
 	{0, 0},	// Auto
-	{1, 3},	// TLS1.0
-	{2, 4},	// SSL3.0
-	{3, 5},	// SSL2.0
-	{4, 6},	// STARTTLS
-	{5, 2},	// TLS1.1
-	{6, 1},	// TLS1.2
+	{1, 4},	// TLS1.0
+	{2, 5},	// SSL3.0
+	{3, 6},	// SSL2.0
+	{4, 7},	// STARTTLS
+	{5, 3},	// TLS1.1
+	{6, 2},	// TLS1.2
+	{7, 1},	// TLS1.3
 };
 
 static int type_to_selelct(int type)
@@ -418,6 +419,7 @@ static BOOL CALLBACK SetSSLProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPar
 		SetWindowLong(hDlg, GWL_USERDATA, lParam);
 
 		SendDlgItemMessage(hDlg, IDC_COMBO_SSLTYPE, CB_ADDSTRING, 0, (LPARAM)STR_SSL_AUTO);
+		SendDlgItemMessage(hDlg, IDC_COMBO_SSLTYPE, CB_ADDSTRING, 0, (LPARAM)STR_SSL_TLS13);
 		SendDlgItemMessage(hDlg, IDC_COMBO_SSLTYPE, CB_ADDSTRING, 0, (LPARAM)STR_SSL_TLS12);
 		SendDlgItemMessage(hDlg, IDC_COMBO_SSLTYPE, CB_ADDSTRING, 0, (LPARAM)STR_SSL_TLS11);
 		SendDlgItemMessage(hDlg, IDC_COMBO_SSLTYPE, CB_ADDSTRING, 0, (LPARAM)STR_SSL_TLS10);
