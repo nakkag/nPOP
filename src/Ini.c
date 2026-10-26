@@ -43,16 +43,16 @@ static void ini_get_encode_info(void);
 BOOL ini_start_auth_check(void)
 {
 	TCHAR app_path[BUF_SIZE];
-	TCHAR ret[BUF_SIZE];
-	TCHAR pass[BUF_SIZE];
+	TCHAR ret[PASS_BUF_SIZE];
+	TCHAR pass[PASS_BUF_SIZE];
 
 	str_join_t(app_path, AppDir, KEY_NAME TEXT(".ini"), (TCHAR *)-1);
 	profile_initialize(app_path, TRUE);
 
 	op.StertPass = profile_get_int(GENERAL, TEXT("StertPass"), 0, app_path);
 	if (op.StertPass == 1) {
-		profile_get_string(GENERAL, TEXT("pw"), TEXT(""), ret, BUF_SIZE - 1, app_path);
-		EncodePassword(TEXT("_pw_"), ret, pass, BUF_SIZE - 1, TRUE);
+		profile_get_string(GENERAL, TEXT("pw"), TEXT(""), ret, PASS_BUF_SIZE - 1, app_path);
+		EncodePassword(TEXT("_pw_"), ret, pass, PASS_BUF_SIZE - 1, TRUE);
 		if (*pass == TEXT('\0')) {
 			profile_free();
 			return TRUE;
@@ -103,6 +103,8 @@ BOOL ini_read_setting(HWND hWnd)
 	TCHAR conv_buf[INI_BUF_SIZE];
 	TCHAR ret[BUF_SIZE];
 	TCHAR tmp[BUF_SIZE];
+	TCHAR pass_ret[PASS_BUF_SIZE];
+	TCHAR pass_tmp[PASS_BUF_SIZE];
 	TCHAR *p, *r;
 	UINT char_set;
 	int i, j, t, cnt;
@@ -195,9 +197,9 @@ BOOL ini_read_setting(HWND hWnd)
 
 	op.StertPass = profile_get_int(GENERAL, TEXT("StertPass"), 0, app_path);
 	op.ShowPass = profile_get_int(GENERAL, TEXT("ShowPass"), 0, app_path);
-	profile_get_string(GENERAL, TEXT("pw"), TEXT(""), ret, BUF_SIZE - 1, app_path);
-	EncodePassword(TEXT("_pw_"), ret, tmp, BUF_SIZE - 1, TRUE);
-	op.Password = alloc_copy_t(tmp);
+	profile_get_string(GENERAL, TEXT("pw"), TEXT(""), pass_ret, PASS_BUF_SIZE - 1, app_path);
+	EncodePassword(TEXT("_pw_"), pass_ret, pass_tmp, PASS_BUF_SIZE - 1, TRUE);
+	op.Password = alloc_copy_t(pass_tmp);
 
 	op.LvColSize[0] = Scale(profile_get_int(GENERAL, TEXT("LvColSize-0"), 150, app_path));
 	op.LvColSize[1] = Scale(profile_get_int(GENERAL, TEXT("LvColSize-1"), 100, app_path));
@@ -320,9 +322,9 @@ BOOL ini_read_setting(HWND hWnd)
 		// User
 		(MailBox + cnt)->User = profile_alloc_string(buf, TEXT("User"), TEXT(""), app_path);
 		// Pass
-		profile_get_string(buf, TEXT("Pass"), TEXT(""), ret, BUF_SIZE - 1, app_path);
-		EncodePassword((MailBox + cnt)->User, ret, tmp, BUF_SIZE - 1, TRUE);
-		(MailBox + cnt)->Pass = alloc_copy_t(tmp);
+		profile_get_string(buf, TEXT("Pass"), TEXT(""), pass_ret, PASS_BUF_SIZE - 1, app_path);
+		EncodePassword((MailBox + cnt)->User, pass_ret, pass_tmp, PASS_BUF_SIZE - 1, TRUE);
+		(MailBox + cnt)->Pass = alloc_copy_t(pass_tmp);
 		// APOP
 		(MailBox + cnt)->APOP = profile_get_int(buf, TEXT("APOP"), 0, app_path);
 		// POP SSL
@@ -390,9 +392,9 @@ BOOL ini_read_setting(HWND hWnd)
 		// SMTP Authentication User
 		(MailBox + cnt)->SmtpUser = profile_alloc_string(buf, TEXT("SmtpUser"), TEXT(""), app_path);
 		// SMTP Authentication Pass
-		profile_get_string(buf, TEXT("SmtpPass"), TEXT(""), ret, BUF_SIZE - 1, app_path);
-		EncodePassword((MailBox + cnt)->SmtpUser, ret, tmp, BUF_SIZE - 1, TRUE);
-		(MailBox + cnt)->SmtpPass = alloc_copy_t(tmp);
+		profile_get_string(buf, TEXT("SmtpPass"), TEXT(""), pass_ret, PASS_BUF_SIZE - 1, app_path);
+		EncodePassword((MailBox + cnt)->SmtpUser, pass_ret, pass_tmp, PASS_BUF_SIZE - 1, TRUE);
+		(MailBox + cnt)->SmtpPass = alloc_copy_t(pass_tmp);
 		// SMTP SSL
 		(MailBox + cnt)->SmtpSSL = profile_get_int(buf, TEXT("SmtpSSL"), 0, app_path);
 		// SMTP SSL Option
@@ -459,6 +461,7 @@ BOOL ini_save_setting(HWND hWnd, BOOL SaveMailFlag)
 	TCHAR key_buf[BUF_SIZE];
 	TCHAR conv_buf[INI_BUF_SIZE];
 	TCHAR tmp[BUF_SIZE];
+	TCHAR pass_tmp[PASS_BUF_SIZE];
 #ifdef UNICODE
 	TCHAR ret[BUF_SIZE];
 #endif
@@ -516,8 +519,8 @@ BOOL ini_save_setting(HWND hWnd, BOOL SaveMailFlag)
 	profile_write_int(GENERAL, TEXT("AutoSave"), op.AutoSave, app_path);
 	profile_write_int(GENERAL, TEXT("StertPass"), op.StertPass, app_path);
 	profile_write_int(GENERAL, TEXT("ShowPass"), op.ShowPass, app_path);
-	EncodePassword(TEXT("_pw_"), op.Password, tmp, BUF_SIZE - 1, FALSE);
-	profile_write_string(GENERAL, TEXT("pw"), tmp, app_path);
+	EncodePassword(TEXT("_pw_"), op.Password, pass_tmp, PASS_BUF_SIZE - 1, FALSE);
+	profile_write_string(GENERAL, TEXT("pw"), pass_tmp, app_path);
 
 	profile_write_int(GENERAL, TEXT("LvColSize-0"), UnScale(op.LvColSize[0]), app_path);
 	profile_write_int(GENERAL, TEXT("LvColSize-1"), UnScale(op.LvColSize[1]), app_path);
@@ -630,8 +633,8 @@ BOOL ini_save_setting(HWND hWnd, BOOL SaveMailFlag)
 		// User
 		profile_write_string(buf, TEXT("User"), (MailBox + j)->User, app_path);
 		// Pass
-		EncodePassword((MailBox + j)->User, (MailBox + j)->Pass, tmp, BUF_SIZE - 1, FALSE);
-		profile_write_string(buf, TEXT("Pass"), tmp, app_path);
+		EncodePassword((MailBox + j)->User, (MailBox + j)->Pass, pass_tmp, PASS_BUF_SIZE - 1, FALSE);
+		profile_write_string(buf, TEXT("Pass"), pass_tmp, app_path);
 		// APOP
 		profile_write_int(buf, TEXT("APOP"), (MailBox + j)->APOP, app_path);
 		// POP SSL
@@ -702,8 +705,8 @@ BOOL ini_save_setting(HWND hWnd, BOOL SaveMailFlag)
 		// SMTP Authentication User
 		profile_write_string(buf, TEXT("SmtpUser"), (MailBox + j)->SmtpUser, app_path);
 		// SMTP Authentication Pass
-		EncodePassword((MailBox + j)->SmtpUser, (MailBox + j)->SmtpPass, tmp, BUF_SIZE - 1, FALSE);
-		profile_write_string(buf, TEXT("SmtpPass"), tmp, app_path);
+		EncodePassword((MailBox + j)->SmtpUser, (MailBox + j)->SmtpPass, pass_tmp, PASS_BUF_SIZE - 1, FALSE);
+		profile_write_string(buf, TEXT("SmtpPass"), pass_tmp, app_path);
 		// SMTP SSL
 		profile_write_int(buf, TEXT("SmtpSSL"), (MailBox + j)->SmtpSSL, app_path);
 		// SMTP SSL Option

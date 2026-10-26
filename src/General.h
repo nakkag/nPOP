@@ -53,6 +53,7 @@
 #define MAXSIZE					32768
 #define EDITMAXSIZE				30000
 #define DIR_MAX_LEN				(BUF_SIZE - 64)		// データ保存先のパスの最大長
+#define PASS_BUF_SIZE			1024				// 暗号化したパスワードのバッファサイズ
 #define COPYDATA_MAX			(sizeof(TCHAR) * 32768)	// WM_COPYDATA で受け付ける最大サイズ
 
 #define SICONSIZE				Scale(16)			// 小さいアイコンのサイズ
