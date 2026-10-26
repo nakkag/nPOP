@@ -469,7 +469,8 @@ static void ListView_GetDispItem(LV_ITEM *hLVItem)
 			p = (tpMailItem->Subject != NULL && *tpMailItem->Subject != TEXT('\0')) ?
 				tpMailItem->Subject : STR_LIST_NOSUBJECT;
 
-			if (op.LvThreadView == 1 && tpMailItem->Indent != 0) {
+			if (op.LvThreadView == 1 && tpMailItem->Indent != 0 &&
+				hLVItem->cchTextMax > lstrlen(STR_LIST_THREADSTR) + 1) {
 				r = hLVItem->pszText;
 				// ƒCƒ“ƒfƒ“ƒg‚©‚ç’Ç‰Á‚·‚é‹ó”’‚Ì”‚ðŒvŽZ‚·‚é
 				j = ((tpMailItem->Indent * 4) > (hLVItem->cchTextMax - 1)) ?
@@ -482,7 +483,7 @@ static void ListView_GetDispItem(LV_ITEM *hLVItem)
 				// Ž}‚Ì’Ç‰Á
 				r = str_cpy_t(r, STR_LIST_THREADSTR);
 				// Œ–¼‚Ì’Ç‰Á
-				str_cpy_n_t(r, p, BUF_SIZE - (r - hLVItem->pszText) - 1);
+				str_cpy_n_t(r, p, hLVItem->cchTextMax - (int)(r - hLVItem->pszText));
 				return;
 			}
 			break;
@@ -505,7 +506,10 @@ static void ListView_GetDispItem(LV_ITEM *hLVItem)
 		default:
 			return;
 		}
-		str_cpy_n_t(hLVItem->pszText, (p != NULL) ? p : TEXT("\0"), BUF_SIZE - 1);
+		if (hLVItem->cchTextMax > 0) {
+			str_cpy_n_t(hLVItem->pszText, (p != NULL) ? p : TEXT("\0"),
+				(hLVItem->cchTextMax < BUF_SIZE) ? hLVItem->cchTextMax : BUF_SIZE);
+		}
 	}
 }
 

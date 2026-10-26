@@ -29,6 +29,10 @@ static void get_content(char *buf, char *str, char **ret);
 static BOOL get_content_value(char *Content, char *Attribute, char *ret);
 static char *multipart_get_filename_rfc2231(char *buf);
 
+#define RFC2231_MAX_SECTION		100			// RFC 2231 の連番の上限
+#define MULTIPART_MAX_DEPTH		16			// マルチパートの入れ子の上限
+#define MULTIPART_MAX_PARTS		10000		// 解析するパートの総数の上限
+
 /*
  * multipart_add - Part情報の追加
  */
@@ -195,6 +199,13 @@ static char *multipart_get_filename_rfc2231(char *buf)
 			p++;
 			No = a2i(p);
 		}
+		if (No < 0 || No >= RFC2231_MAX_SECTION) {
+			// 不正な連番は無視して次のparameterに移動
+			for (; *p != '\0' && *p != ';'; p++);
+			if (*p == ';') p++;
+			for (; *p == ' ' || *p == '\t'; p++);
+			continue;
+		}
 		if (AllocNo <= No) {
 			// ファイル名のリストの確保
 			NamesTmp = (char **)mem_calloc(sizeof(char *) * (No + 1));
@@ -222,6 +233,9 @@ static char *multipart_get_filename_rfc2231(char *buf)
 		}
 		str_cpy_n(tmp, r, p - r + 1);
 
+		if (*(Names + No) != NULL) {
+			mem_free(&*(Names + No));
+		}
 		*(Names + No) = (char *)mem_alloc(sizeof(char) * (tstrlen(tmp) + 1));
 		if (*(Names + No) == NULL) {
 			mem_free(&tmp);
@@ -319,6 +333,8 @@ char *multipart_get_filename(char *buf, char *Attribute)
  */
 int multipart_parse(char *ContentType, char *buf, MULTIPART ***tpMultiPart, int cnt)
 {
+	static int depth = 0;
+	static int total = 0;
 	MULTIPART *tpMultiPartItem;
 	char *Boundary;
 	char *p;
@@ -326,6 +342,9 @@ int multipart_parse(char *ContentType, char *buf, MULTIPART ***tpMultiPart, int 
 
 	if (ContentType == NULL || buf == NULL) {
 		return 0;
+	}
+	if (depth == 0) {
+		total = 0;
 	}
 
 	// boundaryの取得
@@ -345,6 +364,9 @@ int multipart_parse(char *ContentType, char *buf, MULTIPART ***tpMultiPart, int 
 		if (*p == '\0') {
 			break;
 		}
+		if (++total > MULTIPART_MAX_PARTS) {
+			break;
+		}
 		p += (2 + tstrlen(Boundary));
 		// パーツの終わりかチェック
 		if (*p == '-' && *(p + 1) == '-') {
@@ -356,7 +378,13 @@ int multipart_parse(char *ContentType, char *buf, MULTIPART ***tpMultiPart, int 
 			str_cmp_ni(Content, "multipart", tstrlen("multipart")) == 0) {
 			// 階層になっている場合は再帰する
 			sPos = GetBodyPointa(p);
+			if (sPos == NULL || depth >= MULTIPART_MAX_DEPTH) {
+				mem_free(&Content);
+				break;
+			}
+			depth++;
 			cnt = multipart_parse(Content, sPos, tpMultiPart, cnt);
+			depth--;
 			mem_free(&Content);
 			p = get_next_part(sPos, Boundary);
 			continue;

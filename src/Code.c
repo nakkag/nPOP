@@ -32,6 +32,9 @@ char *base64_decode(char *buf, char *ret)
 		return ret;
 	}
 
+	for (i = 0; i < 256; i++) {
+		*(Base + i) = 0;
+	}
 	for (i = 0; i < 26; i++) {
 		*(Base + 'A' + i) = i;
 		*(Base + 'a' + i) = i + 26;
@@ -209,6 +212,10 @@ char *QuotedPrintable_decode(char *buf, char *ret)
 			} else if (*(p + 1) == '\n') {
 				p++;
 
+			} else if (*(p + 1) == '\0' || *(p + 2) == '\0') {
+				// 不完全なエスケープは終端とする
+				break;
+
 			} else {
 				*(r++) = hex_val(*(p + 1)) * 16 + hex_val(*(p + 2));
 				p += 2;
@@ -287,7 +294,7 @@ char *URL_decode(char *buf, char *ret)
 	r = ret;
 
 	while (*p) {
-		if (*p == '%') {
+		if (*p == '%' && *(p + 1) != '\0' && *(p + 2) != '\0') {
 			*(r++) = hex_val(*(p + 1)) * 16 + hex_val(*(p + 2));
 			p += 2;
 		} else if (*p == '+') {

@@ -296,8 +296,10 @@ BOOL profile_initialize(const TCHAR *file_path, const BOOL read_flag)
 	} else {
 		// 元ファイルをバックアップ
 		TCHAR backup_path[MAX_PATH];
-		wsprintf(backup_path, TEXT("%s.back"), file_path);
-		CopyFile(file_path, backup_path, FALSE);
+		if (lstrlen(file_path) + lstrlen(TEXT(".back")) < MAX_PATH) {
+			wsprintf(backup_path, TEXT("%s.back"), file_path);
+			CopyFile(file_path, backup_path, FALSE);
+		}
 		// Unicodeに変換
 		*(cbuf + size_low) = '\0';
 		len = MultiByteToWideChar(CP_ACP, 0, cbuf, -1, NULL, 0);
@@ -351,18 +353,20 @@ BOOL profile_initialize(const TCHAR *file_path, const BOOL read_flag)
 			}
 			if (*p == TEXT('#')) {
 				// コメント
-				for (s = tmp; p < r; p++, s++) {
+				for (s = tmp; p < r && s < tmp + BUF_SIZE - 1; p++, s++) {
 					*s = *p;
 				}
 				*s = TEXT('\0');
 				key_add((section_info + section_count - 1), tmp, TEXT(""), TRUE);
 			} else {
 				// キーの追加
-				for (s = tmp; p < r; p++, s++) {
+				for (s = tmp; p < r; p++) {
 					if (*p == TEXT('=')) {
 						break;
 					}
-					*s = *p;
+					if (s < tmp + BUF_SIZE - 1) {
+						*(s++) = *p;
+					}
 				}
 				*s = TEXT('\0');
 				if (*p == TEXT('=')) {

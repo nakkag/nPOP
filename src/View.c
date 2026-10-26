@@ -1271,7 +1271,7 @@ static void OpenURL(HWND hWnd)
 	} else if (str_cmp_ni_t(s, URL_MAILTO, lstrlen(URL_MAILTO)) == 0 ||
 		MailToFlag == 1) {
 		SendDlgItemMessage(hWnd, IDC_EDIT_BODY, EM_SETSEL, (WPARAM)i, (LPARAM)i);
-		if (Edit_MailToSet(hInst, hWnd, s, vSelBox) == EDIT_INSIDEEDIT) {
+		if (Edit_MailToSet(hInst, hWnd, s, vSelBox, FALSE) == EDIT_INSIDEEDIT) {
 		}
 	}
 	mem_free(&str);
@@ -1325,7 +1325,7 @@ static BOOL Decode(HWND hWnd, int id)
 		SwitchCursor(TRUE);
 		return FALSE;
 	}
-	if (len == 0) {
+	if (len <= 1) {
 		*b64str = '\0';
 	} else {
 		str_cpy_n(b64str, (*(tpMultiPart + id))->sPos, len - 1);
@@ -1342,7 +1342,7 @@ static BOOL Decode(HWND hWnd, int id)
 	case 1:
 	case 2:
 		// エンコードされている場合はデコードを行う
-		dstr = (char *)mem_alloc(tstrlen(b64str));
+		dstr = (char *)mem_alloc(tstrlen(b64str) + 1);
 		if (dstr == NULL) {
 			mem_free(&b64str);
 			SwitchCursor(TRUE);
@@ -1489,7 +1489,7 @@ static BOOL DeleteAttachFile(HWND hWnd, MAILITEM *tpMailItem)
 			multipart_free(&tpPart, cnt);
 			return FALSE;
 		}
-		if (i == 0) {
+		if (i <= 1) {
 			*mBody = '\0';
 		} else {
 			str_cpy_n(mBody, (*tpPart + TextIndex)->sPos, i - 1);
@@ -1600,7 +1600,7 @@ static BOOL AppViewMail(MAILITEM *tpMailItem)
 	SetCurrentDirectory(AppDir);
 
 	// メールをファイルに保存
-	str_join_t(path, DataDir, VIEW_FILE, TEXT("."), op.ViewFileSuffix, (TCHAR *)-1);
+	wsprintf(path, TEXT("%s%s.%.16s"), DataDir, VIEW_FILE, op.ViewFileSuffix);
 	if (SaveViewMail(path, NULL, 0, tpMailItem, op.ViewFileHeader) == FALSE) {
 		return FALSE;
 	}

@@ -156,6 +156,7 @@ static HWND InitInstance(HINSTANCE hInstance, int CmdShow);
 static BOOL GetAppPath(HINSTANCE hinst)
 {
 	TCHAR *p, *r;
+	DWORD len;
 
 	AppDir = (TCHAR *)mem_calloc(sizeof(TCHAR) * BUF_SIZE);
 	if (AppDir == NULL) {
@@ -163,7 +164,11 @@ static BOOL GetAppPath(HINSTANCE hinst)
 	}
 
 	// アプリケーションのパスを取得
-	GetModuleFileName(hinst, AppDir, BUF_SIZE - 1);
+	len = GetModuleFileName(hinst, AppDir, BUF_SIZE - 1);
+	if (len == 0 || len >= BUF_SIZE - 1) {
+		mem_free(&AppDir);
+		return FALSE;
+	}
 	for (p = r = AppDir; *p != TEXT('\0'); p++) {
 #ifndef UNICODE
 		if (IsDBCSLeadByte((BYTE)*p) == TRUE && *(p + 1) != TEXT('\0')) {
@@ -178,6 +183,11 @@ static BOOL GetAppPath(HINSTANCE hinst)
 	*r = TEXT('\0');
 
 	lstrcat(AppDir, TEXT("\\"));
+	if (lstrlen(AppDir) > DIR_MAX_LEN) {
+		// パスが長すぎる
+		mem_free(&AppDir);
+		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -212,7 +222,7 @@ static BOOL CommandLine(HWND hWnd, TCHAR *buf)
 	} else {
 		for (r = p; *r != TEXT('\0') && *r != TEXT(' '); r++);
 	}
-	str_cpy_n_t(name, p, r - p + 1);
+	str_cpy_n_t(name, p, ((r - p + 1) < BUF_SIZE) ? (int)(r - p + 1) : BUF_SIZE);
 	i = mailbox_name_to_index(name);
 	mailbox_select(hWnd, i);
 
@@ -1065,16 +1075,22 @@ static BOOL EndWindow(HWND hWnd)
 	}
 
 	// 外部アプリ用ファイルの削除
-	str_join_t(path, DataDir, VIEW_FILE, TEXT("."), op.ViewFileSuffix, (TCHAR *)-1);
+	wsprintf(path, TEXT("%s%s.%.16s"), DataDir, VIEW_FILE, op.ViewFileSuffix);
 	DeleteFile(path);
 
 	// 添付ファイルの削除
-	if (op.AttachDelete != 0) {
+	if (op.AttachDelete != 0 && op.AttachPath != NULL) {
 		TCHAR file[BUF_SIZE];
-		wsprintf(path, TEXT("%s%s\\"), DataDir, op.AttachPath);
-		wsprintf(file, TEXT("%s*"), ATTACH_FILE);
-		dir_delete(path, file);
-		RemoveDirectory(path);
+		TCHAR *apath;
+
+		apath = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(DataDir) + lstrlen(op.AttachPath) + 2));
+		if (apath != NULL) {
+			str_join_t(apath, DataDir, op.AttachPath, TEXT("\\"), (TCHAR *)-1);
+			wsprintf(file, TEXT("%s*"), ATTACH_FILE);
+			dir_delete(apath, file);
+			RemoveDirectory(apath);
+			mem_free(&apath);
+		}
 	}
 
 	// 検索文字列の解放
@@ -2088,14 +2104,32 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		break;
 
 	case WM_COPYDATA:
-		if (op.ShowPass == 1 &&
-			(IsWindowVisible(hWnd) == 0 || IsIconic(hWnd) != 0) &&
-			op.Password != NULL && *op.Password != TEXT('\0') &&
-			ConfirmPass(hWnd, op.Password) == FALSE) {
-			break;
-		}
-		if (CommandLine(hWnd, ((PCOPYDATASTRUCT)lParam)->lpData) == TRUE) {
-			Edit_MailToSet(hInst, hWnd, ((PCOPYDATASTRUCT)lParam)->lpData, -1);
+		{
+			PCOPYDATASTRUCT cds = (PCOPYDATASTRUCT)lParam;
+			TCHAR *cmd;
+
+			// 受信データの検証
+			if (cds == NULL || cds->lpData == NULL ||
+				cds->cbData < sizeof(TCHAR) || cds->cbData > COPYDATA_MAX) {
+				break;
+			}
+			if (op.ShowPass == 1 &&
+				(IsWindowVisible(hWnd) == 0 || IsIconic(hWnd) != 0) &&
+				op.Password != NULL && *op.Password != TEXT('\0') &&
+				ConfirmPass(hWnd, op.Password) == FALSE) {
+				break;
+			}
+			// NUL終端したコピーを作成
+			cmd = (TCHAR *)mem_alloc(cds->cbData + sizeof(TCHAR));
+			if (cmd == NULL) {
+				break;
+			}
+			CopyMemory(cmd, cds->lpData, cds->cbData);
+			*(cmd + cds->cbData / sizeof(TCHAR)) = TEXT('\0');
+			if (CommandLine(hWnd, cmd) == TRUE) {
+				Edit_MailToSet(hInst, hWnd, cmd, -1, TRUE);
+			}
+			mem_free(&cmd);
 		}
 		break;
 
@@ -2416,7 +2450,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		case ID_NEWMAIL_TIMER:
 			KillTimer(hWnd, wParam);
 			if (CmdLine != NULL) {
-				if (CommandLine(hWnd, CmdLine) == TRUE && Edit_MailToSet(hInst, hWnd, CmdLine, -1) == EDIT_INSIDEEDIT) {
+				if (CommandLine(hWnd, CmdLine) == TRUE && Edit_MailToSet(hInst, hWnd, CmdLine, -1, TRUE) == EDIT_INSIDEEDIT) {
 				}
 				mem_free(&CmdLine);
 				break;
@@ -3239,10 +3273,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				COPYDATASTRUCT cpdata;
 
 				CmdLine = alloc_char_to_tchar(lpCmdLine);
-				cpdata.lpData = CmdLine;
-				cpdata.cbData = sizeof(TCHAR) * (tstrlen(lpCmdLine) + 1);
-				SendMessage(hWnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&cpdata);
-				mem_free(&CmdLine);
+				if (CmdLine != NULL) {
+					cpdata.dwData = 0;
+					cpdata.lpData = CmdLine;
+					cpdata.cbData = sizeof(TCHAR) * (lstrlen(CmdLine) + 1);
+					SendMessage(hWnd, WM_COPYDATA, (WPARAM)NULL, (LPARAM)&cpdata);
+					mem_free(&CmdLine);
+				}
 			} else {
 				SendMessage(hWnd, WM_SHOWLASTWINDOW, 0, 0);
 			}
@@ -3259,7 +3296,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (hMutex != NULL) {
 			CloseHandle(hMutex);
 		}
-		ErrorMessage(NULL, STR_ERR_MEMALLOC);
+		ErrorMessage(NULL, STR_ERR_INIT);
 		return 0;
 	}
 

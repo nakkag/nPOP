@@ -290,6 +290,9 @@ char *str_cpy(char *ret, char *buf)
  */
 void str_cpy_n_t(TCHAR *ret, TCHAR *buf, int len)
 {
+	if (len <= 0) {
+		return;
+	}
 	while (--len && (*(ret++) = *(buf++)));
 	*ret = TEXT('\0');
 }
@@ -300,6 +303,9 @@ void str_cpy_n_t(TCHAR *ret, TCHAR *buf, int len)
 #ifdef UNICODE
 void str_cpy_n(char *ret, char *buf, int len)
 {
+	if (len <= 0) {
+		return;
+	}
 	while (--len && (*(ret++) = *(buf++)));
 	*ret = '\0';
 }

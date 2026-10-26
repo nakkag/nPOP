@@ -108,6 +108,9 @@
 									TEXT("コンピュータに被害を及ぼす可能性があります。\n\n")\
 									TEXT("実行してよろしいですか？")
 
+#define STR_Q_URL_ATTACH			TEXT("次のファイルを添付したメールを作成します。\n")\
+									TEXT("添付してよろしいですか？\n\n")
+
 // Message
 #define STR_MSG_NOMARK				TEXT("マークされたメールがありません")
 #define STR_MSG_NOBODY				TEXT("本文が取得されていないため開くことができません\n\n")\

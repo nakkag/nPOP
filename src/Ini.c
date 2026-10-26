@@ -119,6 +119,10 @@ BOOL ini_read_setting(HWND hWnd)
 	}
 
 	len = profile_get_string(GENERAL, TEXT("DataFileDir"), TEXT(""), op.DataFileDir, BUF_SIZE - 1, app_path);
+	if (lstrlen(op.DataFileDir) > DIR_MAX_LEN) {
+		// データ保存先のパスが長すぎる
+		return FALSE;
+	}
 	if (*op.DataFileDir == TEXT('\0')) {
 		DataDir = AppDir;
 	} else {

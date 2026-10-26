@@ -112,6 +112,9 @@
 									TEXT("it may damage your computer.\n\n")\
 									TEXT("Do you want to open it?")
 
+#define STR_Q_URL_ATTACH			TEXT("A new mail will be created with the following files attached.\n")\
+									TEXT("Attach these files?\n\n")
+
 // Message
 #define STR_MSG_NOMARK				TEXT("There is no marked mail")
 #define STR_MSG_NOBODY				TEXT("Message body not downloaded. Cannot be opened\n\n")\

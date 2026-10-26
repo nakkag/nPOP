@@ -319,7 +319,7 @@ TCHAR *GetBodyPointaT(TCHAR *buf)
 			break;
 		}
 		p += 2;
-		if (*p == TEXT('\r') || *(p + 1) == TEXT('\n')) {
+		if (*p == TEXT('\r') && *(p + 1) == TEXT('\n')) {
 			return (p + 2);
 		}
 	}
@@ -340,7 +340,7 @@ char *GetBodyPointa(char *buf)
 			break;
 		}
 		p += 2;
-		if (*p == '\r' || *(p + 1) == '\n') {
+		if (*p == '\r' && *(p + 1) == '\n') {
 			return (p + 2);
 		}
 	}
@@ -982,6 +982,7 @@ void EncodePassword(TCHAR *Key, TCHAR *Word, TCHAR *ret, int retsize, BOOL decod
 		// デコード
 		r = (char *)mem_alloc(tstrlen(p) + 1);
 		if (r == NULL) {
+			mem_free(&p);
 			*ret = TEXT('\0');
 			return;
 		}
@@ -1005,9 +1006,11 @@ void EncodePassword(TCHAR *Key, TCHAR *Word, TCHAR *ret, int retsize, BOOL decod
 
 	if (decode == TRUE) {
 #ifdef UNICODE
-		char_to_tchar(p, ret, retsize);
+		if (char_to_tchar(p, ret, retsize) == 0) {
+			*ret = TEXT('\0');
+		}
 #else
-		lstrcpy(ret, p);
+		str_cpy_n_t(ret, p, retsize);
 #endif
 	} else {
 		// エンコード
@@ -1022,9 +1025,11 @@ void EncodePassword(TCHAR *Key, TCHAR *Word, TCHAR *ret, int retsize, BOOL decod
 
 		*ret = TEXT('=');
 #ifdef UNICODE
-		char_to_tchar(p, ret + 1, retsize - 1);
+		if (char_to_tchar(p, ret + 1, retsize - 1) == 0) {
+			*ret = TEXT('\0');
+		}
 #else
-		lstrcpy(ret + 1, p);
+		str_cpy_n_t(ret + 1, p, retsize - 1);
 #endif
 	}
 	mem_free(&p);
@@ -1096,6 +1101,10 @@ void DecodeCtrlChar(TCHAR *buf, TCHAR *ret)
 			continue;
 		}
 		p++;
+		if (*p == TEXT('\0')) {
+			*(r++) = TEXT('\\');
+			break;
+		}
 		switch (*p) {
 		case TEXT('t'):
 			*(r++) = TEXT('\t');
@@ -1166,6 +1175,9 @@ int CreateHeaderStringSize(TCHAR *buf, MAILITEM *tpMailItem)
 			continue;
 		}
 		p++;
+		if (*p == TEXT('\0')) {
+			break;
+		}
 		switch (*p) {
 		case TEXT('F'): case TEXT('f'):
 			ret += NULLCHECK_STRLEN(tpMailItem->From);
@@ -1229,6 +1241,9 @@ TCHAR *CreateHeaderString(TCHAR *buf, TCHAR *ret, MAILITEM *tpMailItem)
 			continue;
 		}
 		p++;
+		if (*p == TEXT('\0')) {
+			break;
+		}
 		t = NULL;
 		switch (*p) {
 		// From:
@@ -1292,7 +1307,7 @@ int GetReplyBodySize(TCHAR *body, TCHAR *ReStr)
 		return lstrlen(body);
 	}
 
-	for (s = body + lstrlen(body) - 1; *s == '\r' || *s == '\n'; s--);
+	for (s = body + lstrlen(body) - 1; s >= body && (*s == '\r' || *s == '\n'); s--);
 
 	len += lstrlen(ReStr);
 	for (p = body; p <= s && *p != TEXT('\0'); p++) {
@@ -1322,7 +1337,7 @@ TCHAR *SetReplyBody(TCHAR *body, TCHAR *ret, TCHAR *ReStr)
 	}
 
 	// 最後尾の空行は引用しない
-	for (s = body + lstrlen(body) - 1; *s == '\r' || *s == '\n'; s--);
+	for (s = body + lstrlen(body) - 1; s >= body && (*s == '\r' || *s == '\n'); s--);
 
 	// 先頭行の引用
 	r = str_cpy_t(ret, ReStr);
@@ -1506,7 +1521,7 @@ int WordBreakStringSize(TCHAR *buf, TCHAR *str, int BreakCnt, BOOL BreakFlag)
 			p += CSTEP;
 			ret += CSTEP;
 
-		} else if (*p == TEXT('\r')) {
+		} else if (*p == TEXT('\r') && *(p + 1) == TEXT('\n')) {
 			cnt = 0;
 			p += 2;
 			ret += 2;
@@ -1554,6 +1569,9 @@ int WordBreakStringSize(TCHAR *buf, TCHAR *str, int BreakCnt, BOOL BreakFlag)
 				ret += 2;
 				while (*p == TEXT(' ')) {
 					p++;
+				}
+				if (*p == TEXT('\0')) {
+					break;
 				}
 			}
 			cnt++;
@@ -1611,7 +1629,7 @@ void WordBreakString(TCHAR *buf, TCHAR *ret, TCHAR *str, int BreakCnt, BOOL Brea
 			*(r++) = *(p++);
 #endif
 
-		} else if (*p == TEXT('\r')) {
+		} else if (*p == TEXT('\r') && *(p + 1) == TEXT('\n')) {
 			// 改行
 			cnt = 0;
 			*(r++) = *(p++);
@@ -1667,6 +1685,9 @@ void WordBreakString(TCHAR *buf, TCHAR *ret, TCHAR *str, int BreakCnt, BOOL Brea
 				while (*p == TEXT(' ')) { // GJC strip leading spaces
 					p++;
 				}
+				if (*p == TEXT('\0')) {
+					break;
+				}
 			}
 			cnt++;
 			*(r++) = *(p++);
@@ -1702,7 +1723,7 @@ static BOOL URLHeadToItem(TCHAR *str, TCHAR *head, TCHAR **buf)
 /*
  * URLToMailItem - mailto URL scheme をメールアイテムに展開する (RFC 2368)
  */
-BOOL URLToMailItem(TCHAR *buf, MAILITEM *tpMailItem)
+BOOL URLToMailItem(TCHAR *buf, MAILITEM *tpMailItem, BOOL ExtHeader)
 {
 #ifdef UNICODE
 	TCHAR *body = NULL;
@@ -1759,8 +1780,11 @@ BOOL URLToMailItem(TCHAR *buf, MAILITEM *tpMailItem)
 #else
 		URLHeadToItem(tmp, TEXT("body"), &tpMailItem->Body);
 #endif
-		URLHeadToItem(tmp, TEXT("mailbox"), &tpMailItem->MailBox);
-		URLHeadToItem(tmp, TEXT("attach"), &tpMailItem->Attach);
+		if (ExtHeader == TRUE) {
+			// nPOP固有の項目 (コマンドラインから指定された場合のみ)
+			URLHeadToItem(tmp, TEXT("mailbox"), &tpMailItem->MailBox);
+			URLHeadToItem(tmp, TEXT("attach"), &tpMailItem->Attach);
+		}
 	}
 	mem_free(&tmp);
 	return TRUE;
@@ -1781,6 +1805,9 @@ static TCHAR *GetNextQuote(TCHAR *buf, TCHAR qStr)
 		}
 #endif
 		if (*p == TEXT('\\')) {
+			if (*(p + 1) == TEXT('\0')) {
+				break;
+			}
 			p++;
 			continue;
 		}
@@ -2204,6 +2231,9 @@ static int GetCommandLineSize(TCHAR *buf, TCHAR *filename)
 			continue;
 		}
 		p++;
+		if (*p == TEXT('\0')) {
+			break;
+		}
 		switch (*p) {
 		case TEXT('1'):
 			ret += NULLCHECK_STRLEN(filename);
@@ -2261,6 +2291,9 @@ TCHAR *CreateCommandLine(TCHAR *buf, TCHAR *filename, BOOL spFlag)
 			continue;
 		}
 		p++;
+		if (*p == TEXT('\0')) {
+			break;
+		}
 		t = NULL;
 		switch (*p) {
 		// File

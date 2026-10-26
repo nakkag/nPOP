@@ -14,6 +14,10 @@
 #include "String.h"
 
 /* Define */
+// メールボックスはNUL終端したメモリに読み込んで解析する
+#ifndef _NOFILEMAP
+#define _NOFILEMAP
+#endif
 
 /* Global Variables */
 extern OPTION op;
@@ -26,6 +30,9 @@ extern MAILBOX *MailBox;
 /* Local Function Prototypes */
 static int file_get_mail_count(char *buf, long Size);
 static BOOL file_save_address_item(HANDLE hFile, MAILITEM *tpMailItem);
+static void file_set_zone_identifier(TCHAR *path);
+static BOOL filename_is_device(TCHAR *buf);
+static BOOL file_save_exec_write(TCHAR *path, TCHAR *tmp_path, char *buf, int len);
 
 /*
  * log_init - ログの区切りの保存
@@ -124,25 +131,62 @@ BOOL dir_delete(TCHAR *Path, TCHAR *file)
 {
 	WIN32_FIND_DATA FindData;
 	HANDLE hFindFile;
-	TCHAR sPath[BUF_SIZE];
-	TCHAR buf[BUF_SIZE];
+	TCHAR *sPath;
+	TCHAR *buf;
 
-	if (Path == NULL || *Path == TEXT('\0')) {
+	if (Path == NULL || *Path == TEXT('\0') || file == NULL) {
 		return FALSE;
 	}
-	wsprintf(sPath, TEXT("%s\\%s"), Path, file);
+	sPath = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(Path) + 1 + lstrlen(file) + 1));
+	if (sPath == NULL) {
+		return FALSE;
+	}
+	str_join_t(sPath, Path, TEXT("\\"), file, (TCHAR *)-1);
 
-	if ((hFindFile = FindFirstFile(sPath, &FindData)) == INVALID_HANDLE_VALUE) {
+	hFindFile = FindFirstFile(sPath, &FindData);
+	mem_free(&sPath);
+	if (hFindFile == INVALID_HANDLE_VALUE) {
 		return FALSE;
 	}
 	do{
 		if (!(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-			wsprintf(buf, TEXT("%s\\%s"), Path, FindData.cFileName);
-			DeleteFile(buf);
+			buf = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(Path) + 1 + lstrlen(FindData.cFileName) + 1));
+			if (buf != NULL) {
+				str_join_t(buf, Path, TEXT("\\"), FindData.cFileName, (TCHAR *)-1);
+				DeleteFile(buf);
+				mem_free(&buf);
+			}
 		}
 	} while (FindNextFile(hFindFile, &FindData) == TRUE);
 	FindClose(hFindFile);
 	return TRUE;
+}
+
+/*
+ * filename_is_device - ファイル名がデバイス名かチェックする
+ */
+static BOOL filename_is_device(TCHAR *buf)
+{
+	TCHAR *names[] = {
+		TEXT("CON"), TEXT("PRN"), TEXT("AUX"), TEXT("NUL"), TEXT("CONIN$"), TEXT("CONOUT$"),
+		TEXT("COM1"), TEXT("COM2"), TEXT("COM3"), TEXT("COM4"), TEXT("COM5"),
+		TEXT("COM6"), TEXT("COM7"), TEXT("COM8"), TEXT("COM9"),
+		TEXT("LPT1"), TEXT("LPT2"), TEXT("LPT3"), TEXT("LPT4"), TEXT("LPT5"),
+		TEXT("LPT6"), TEXT("LPT7"), TEXT("LPT8"), TEXT("LPT9"),
+	};
+	TCHAR *p;
+	int len, i;
+
+	// 拡張子より前の部分を比較する
+	for (p = buf; *p != TEXT('\0') && *p != TEXT('.'); p++);
+	for (; p > buf && *(p - 1) == TEXT(' '); p--);
+	len = (int)(p - buf);
+	for (i = 0; i < sizeof(names) / sizeof(TCHAR *); i++) {
+		if (len == lstrlen(names[i]) && str_cmp_ni_t(buf, names[i], len) == 0) {
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
 
 /*
@@ -176,8 +220,26 @@ void filename_conv(TCHAR *buf)
 		case TEXT('>'): case TEXT('|'):
 			*p = TEXT('_');
 			break;
+
+		default:
+			// 制御文字
+			if ((unsigned)*p < 0x20 || *p == 0x7F) {
+				*p = TEXT('_');
+			}
+			break;
 		}
 		p++;
+	}
+	if (*buf == TEXT('\0')) {
+		return;
+	}
+	// 末尾の . と空白は Windows が削除するため _ に変換する
+	for (p = buf + lstrlen(buf) - 1; p >= buf && (*p == TEXT('.') || *p == TEXT(' ')); p--) {
+		*p = TEXT('_');
+	}
+	// デバイス名 (CON, NUL, COM1 など) の場合は先頭の文字を _ に変換する (長さは変えない)
+	if (filename_is_device(buf) == TRUE) {
+		*buf = TEXT('_');
 	}
 }
 
@@ -282,8 +344,11 @@ char *file_read(TCHAR *path, long FileSize)
 	DWORD ret;
 	char *cBuf;
 
+	if (FileSize < 0) {
+		return NULL;
+	}
 	// ファイルを開く
-	hFile = CreateFile(path, GENERIC_READ, 0, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	hFile = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == NULL || hFile == (HANDLE)-1) {
 		return NULL;
 	}
@@ -429,7 +494,7 @@ BOOL file_read_mailbox(TCHAR *FileName, MAILBOX *tpMailBox)
 	i = 0;
 	p = FileBuf + bom;
 	FileSize -= bom;
-	while (FileSize > p - FileBuf && *p != '\0') {
+	while (FileSize > p - FileBuf && *p != '\0' && i < tpMailBox->MailItemCnt) {
 		// ヘッダからメールアイテムを作成
 		if (bom == 3) {
 			tpMailItem = *(tpMailBox->tpMailItem + i) = item_string_to_item_utf8(tpMailBox, p);
@@ -567,9 +632,13 @@ int file_read_address_book(TCHAR* FileName, MAILBOX* tpMailBox)
 #endif
 	}
 	else {
-		TCHAR backup_path[MAX_PATH];
-		wsprintf(backup_path, TEXT("%s.back"), FileName);
-		CopyFile(FileName, backup_path, FALSE);
+		TCHAR *backup_path;
+		backup_path = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(path) + lstrlen(TEXT(".back")) + 1));
+		if (backup_path != NULL) {
+			str_join_t(backup_path, path, TEXT(".back"), (TCHAR *)-1);
+			CopyFile(path, backup_path, FALSE);
+			mem_free(&backup_path);
+		}
 #ifdef UNICODE
 		// UNICODEに変換
 		int len = char_to_tchar_size(FileBuf);
@@ -585,9 +654,9 @@ int file_read_address_book(TCHAR* FileName, MAILBOX* tpMailBox)
 		MemFile = (TCHAR*)FileBuf;
 #endif	// UNICODE
 	}
-	// 行数のカウント
+	// 行数のカウント (最終行が改行で終わらない場合も1行と数える)
 	for (LineCnt = 0, p = MemFile; *p != TEXT('\0'); p++) {
-		if (*p == TEXT('\n')) {
+		if (*p == TEXT('\n') || *(p + 1) == TEXT('\0')) {
 			LineCnt++;
 		}
 	}
@@ -604,7 +673,7 @@ int file_read_address_book(TCHAR* FileName, MAILBOX* tpMailBox)
 	}
 	i = 0;
 	p = MemFile;
-	while (FileSize > p - MemFile && *p != TEXT('\0')) {
+	while (*p != TEXT('\0') && i < tpMailBox->AllocCnt) {
 		tpMailItem = *(tpMailBox->tpMailItem + i) = (MAILITEM*)mem_calloc(sizeof(MAILITEM));
 
 		// メールアドレス
@@ -756,7 +825,31 @@ BOOL file_save(HWND hWnd, TCHAR *FileName, TCHAR *Ext, char *buf, int len)
 	}
 	SwitchCursor(TRUE);
 	CloseHandle(hFile);
+	file_set_zone_identifier(path);
 	return TRUE;
+}
+
+/*
+ * file_set_zone_identifier - インターネットから取得したファイルとして記録する (Mark of the Web)
+ */
+static void file_set_zone_identifier(TCHAR *path)
+{
+	HANDLE hFile;
+	TCHAR *ads;
+	DWORD ret;
+	char *zone = "[ZoneTransfer]\r\nZoneId=3\r\n";
+
+	ads = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(path) + lstrlen(TEXT(":Zone.Identifier")) + 1));
+	if (ads == NULL) {
+		return;
+	}
+	str_join_t(ads, path, TEXT(":Zone.Identifier"), (TCHAR *)-1);
+	hFile = CreateFile(ads, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile != NULL && hFile != (HANDLE)-1) {
+		WriteFile(hFile, zone, tstrlen(zone), &ret, NULL);
+		CloseHandle(hFile);
+	}
+	mem_free(&ads);
 }
 
 /*
@@ -767,65 +860,36 @@ BOOL file_save_exec(HWND hWnd, TCHAR *FileName, char *buf, int len)
 	WIN32_FIND_DATA FindData;
 	SHELLEXECUTEINFO sei;
 	HANDLE hFindFile;
-	HANDLE hFile;
-	TCHAR path[BUF_SIZE];
+	TCHAR *path;
 	TCHAR tmp_path[BUF_SIZE];
-	DWORD ret;
+	BOOL rc;
 
-	if (FileName == NULL) {
+	if (FileName == NULL || *FileName == TEXT('\0') || op.AttachPath == NULL) {
+		return FALSE;
+	}
+	path = (TCHAR *)mem_alloc(sizeof(TCHAR) *
+		(lstrlen(DataDir) + lstrlen(op.AttachPath) + 1 + lstrlen(FileName) + 1));
+	if (path == NULL) {
 		return FALSE;
 	}
 	SwitchCursor(FALSE);
 
 	// ディレクトリの検索
-	wsprintf(path, TEXT("%s%s"), DataDir, op.AttachPath);
+	str_join_t(path, DataDir, op.AttachPath, (TCHAR *)-1);
 	hFindFile = FindFirstFile(path, &FindData);
 	FindClose(hFindFile);
 	if (hFindFile == INVALID_HANDLE_VALUE || !(FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
 		CreateDirectory(path, NULL);
 	}
 
-	wsprintf(path, TEXT("%s%s\\%s"), DataDir, op.AttachPath, FileName);
-	if (op.AttachDelete == 0) {
-		// 一時ファイルに保存
-		wsprintf(tmp_path, TEXT("%s_%lX.tmp"), DataDir, (long)buf);
-		hFile = CreateFile(tmp_path, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (hFile == NULL || hFile == (HANDLE)-1) {
-			SwitchCursor(TRUE);
-			return FALSE;
-		}
-		if (WriteFile(hFile, buf, len, &ret, NULL) == FALSE) {
-			CloseHandle(hFile);
-			DeleteFile(tmp_path);
-			SwitchCursor(TRUE);
-			return FALSE;
-		}
-		FlushFileBuffers(hFile);
-		CloseHandle(hFile);
-
-		// ファイルの移動
-		if (CopyFile(tmp_path, path, FALSE) == FALSE) {
-			DeleteFile(tmp_path);
-			SwitchCursor(TRUE);
-			return FALSE;
-		}
-		DeleteFile(tmp_path);
-	} else {
-		// ファイルに保存
-		hFile = CreateFile(path, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-		if (hFile == NULL || hFile == (HANDLE)-1) {
-			SwitchCursor(TRUE);
-			return FALSE;
-		}
-		if (WriteFile(hFile, buf, len, &ret, NULL) == FALSE) {
-			CloseHandle(hFile);
-			SwitchCursor(TRUE);
-			return FALSE;
-		}
-		FlushFileBuffers(hFile);
-		CloseHandle(hFile);
-	}
+	str_join_t(path, DataDir, op.AttachPath, TEXT("\\"), FileName, (TCHAR *)-1);
+	rc = file_save_exec_write(path, tmp_path, buf, len);
 	SwitchCursor(TRUE);
+	if (rc == FALSE) {
+		mem_free(&path);
+		return FALSE;
+	}
+	file_set_zone_identifier(path);
 
 	// 実行
 	ZeroMemory(&sei, sizeof(SHELLEXECUTEINFO));
@@ -839,6 +903,52 @@ BOOL file_save_exec(HWND hWnd, TCHAR *FileName, char *buf, int len)
 	sei.nShow = SW_SHOWNORMAL;
 	sei.hInstApp = hInst;
 	ShellExecuteEx(&sei);
+	mem_free(&path);
+	return TRUE;
+}
+
+/*
+ * file_save_exec_write - 実行用のファイルを書き込む
+ */
+static BOOL file_save_exec_write(TCHAR *path, TCHAR *tmp_path, char *buf, int len)
+{
+	HANDLE hFile;
+	DWORD ret;
+
+	if (op.AttachDelete == 0) {
+		// 一時ファイルに保存
+		wsprintf(tmp_path, TEXT("%s_%lX.tmp"), DataDir, (long)buf);
+		hFile = CreateFile(tmp_path, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hFile == NULL || hFile == (HANDLE)-1) {
+			return FALSE;
+		}
+		if (WriteFile(hFile, buf, len, &ret, NULL) == FALSE) {
+			CloseHandle(hFile);
+			DeleteFile(tmp_path);
+			return FALSE;
+		}
+		FlushFileBuffers(hFile);
+		CloseHandle(hFile);
+
+		// ファイルの移動
+		if (CopyFile(tmp_path, path, FALSE) == FALSE) {
+			DeleteFile(tmp_path);
+			return FALSE;
+		}
+		DeleteFile(tmp_path);
+	} else {
+		// ファイルに保存
+		hFile = CreateFile(path, GENERIC_READ | GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hFile == NULL || hFile == (HANDLE)-1) {
+			return FALSE;
+		}
+		if (WriteFile(hFile, buf, len, &ret, NULL) == FALSE) {
+			CloseHandle(hFile);
+			return FALSE;
+		}
+		FlushFileBuffers(hFile);
+		CloseHandle(hFile);
+	}
 	return TRUE;
 }
 

@@ -106,7 +106,7 @@ char *MIME_charset_encode(const UINT cp, TCHAR *buf, TCHAR *charset)
 		if (cbuf == NULL) {
 			return NULL;
 		}
-		ret = (char *)mem_alloc(tstrlen(cbuf) * 4 + 1);
+		ret = (char *)mem_alloc(tstrlen(cbuf) * 5 + 3 + 1);
 		if (ret == NULL) {
 			mem_free(&cbuf);
 			return NULL;
@@ -114,7 +114,7 @@ char *MIME_charset_encode(const UINT cp, TCHAR *buf, TCHAR *charset)
 		sjis_iso2022jp(cbuf, ret);
 		mem_free(&cbuf);
 #else
-		ret = (char *)mem_alloc(tstrlen(buf) * 4 + 1);
+		ret = (char *)mem_alloc(tstrlen(buf) * 5 + 3 + 1);
 		if (ret == NULL) {
 			return NULL;
 		}
@@ -798,12 +798,13 @@ int MIME_decode(char *buf, TCHAR *ret)
 		int len;
 
 		cbuf = alloc_tchar_to_char(ret);
-		len = tstrlen(cbuf);
 		if (cbuf != NULL) {
+			len = tstrlen(cbuf);
 			cret = mem_alloc(len + 1);
 			if (cret != NULL) {
 				iso2022jp_sjis(cbuf, cret);
-				char_to_tchar(cret, ret, tstrlen(cret));
+				char_to_tchar(cret, ret, (int)(r - ret) + 1);
+				*r = TEXT('\0');
 				mem_free(&cret);
 			}
 			mem_free(&cbuf);
@@ -1300,7 +1301,7 @@ TCHAR *MIME_body_decode(MAILITEM *tpMailItem, BOOL ViewSrc, MULTIPART ***tpPart,
 			if (body == NULL) {
 				return NULL;
 			}
-			if (i == 0) {
+			if (i <= 1) {
 				*body = '\0';
 			} else {
 				str_cpy_n(body, (*(*tpPart + TextIndex))->sPos, i - 1);

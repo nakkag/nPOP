@@ -186,6 +186,10 @@ void sjis_iso2022jp(unsigned char *buf,unsigned char *ret)
 	knaji = 0;
 
 	while ((c = *(p++)) != '\0') {
+		if (IsKanji(c) == TRUE && *p == '\0') {
+			// 2バイト目が無い場合は終了
+			break;
+		}
 		switch (knaji) {
 		case 0:
 			if (IsKanji(c) == TRUE || IsHankaku(c) == TRUE) {

@@ -2063,7 +2063,7 @@ BOOL CALLBACK SetAttachProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 #define ID_FILE_ADD		(WM_APP + 100)
 	MAILITEM *tpMailItem;
-	TCHAR fpath[BUF_SIZE], buf[BUF_SIZE], *f;
+	TCHAR fpath[BUF_SIZE], buf[BUF_SIZE], *f, *ap;
 	int i, len;
 
 	switch (uMsg) {
@@ -2078,17 +2078,21 @@ BOOL CALLBACK SetAttachProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetWindowLong(hDlg, GWL_EXSTYLE, WS_EX_ACCEPTFILES);
 		if (tpMailItem->Attach != NULL) {
 			f = tpMailItem->Attach;
-			while (*f != TEXT('\0')) {
-				f = str_cpy_f_t(fpath, f, ATTACH_SEP);
-				SendMessage(hDlg, WM_COMMAND, ID_FILE_ADD, (LPARAM)fpath);
+			ap = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(f) + 1));
+			while (ap != NULL && *f != TEXT('\0')) {
+				f = str_cpy_f_t(ap, f, ATTACH_SEP);
+				SendMessage(hDlg, WM_COMMAND, ID_FILE_ADD, (LPARAM)ap);
 			}
+			mem_free(&ap);
 		}
 		if (tmp_attach != NULL) {
 			f = tmp_attach;
-			while (*f != TEXT('\0')) {
-				f = str_cpy_f_t(fpath, f, ATTACH_SEP);
-				SendMessage(hDlg, WM_COMMAND, ID_FILE_ADD, (LPARAM)fpath);
+			ap = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(f) + 1));
+			while (ap != NULL && *f != TEXT('\0')) {
+				f = str_cpy_f_t(ap, f, ATTACH_SEP);
+				SendMessage(hDlg, WM_COMMAND, ID_FILE_ADD, (LPARAM)ap);
 			}
+			mem_free(&ap);
 		}
 		SendDlgItemMessage(hDlg, IDC_LIST_FILE, LB_SETHORIZONTALEXTENT,
 			MAX_PATH * 9 + GetSystemMetrics(SM_CXVSCROLL), 0);
@@ -2123,7 +2127,9 @@ BOOL CALLBACK SetAttachProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			lParam = (LPARAM)fpath;
 		case ID_FILE_ADD:
-			if (dir_check((TCHAR *)lParam) == TRUE) {
+			// リストの項目は BUF_SIZE のバッファで取得するため長いパスは追加しない
+			if (lParam == 0 || *(TCHAR *)lParam == TEXT('\0') ||
+				lstrlen((TCHAR *)lParam) >= BUF_SIZE || dir_check((TCHAR *)lParam) == TRUE) {
 				break;
 			}
 			for (i = 0; i < SendDlgItemMessage(hDlg, IDC_LIST_FILE, LB_GETCOUNT, 0, 0); i++) {
@@ -2708,7 +2714,7 @@ BOOL CALLBACK MailPropProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 
 			// 送信情報の設定
-			i = Edit_MailToSet(hInst, hDlg, buf, -1);
+			i = Edit_MailToSet(hInst, hDlg, buf, -1, FALSE);
 			if (i != EDIT_NONEDIT) {
 				EndDialog(hDlg, TRUE);
 				if (op.ViewClose == 1) {
@@ -3078,7 +3084,7 @@ BOOL CALLBACK AddressListProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam
 			}
 
 			SendMessage(hDlg, WM_COMMAND, IDOK, 0);
-			if (Edit_MailToSet(hInst, MainWnd, StrAddr, -1) == EDIT_INSIDEEDIT) {
+			if (Edit_MailToSet(hInst, MainWnd, StrAddr, -1, FALSE) == EDIT_INSIDEEDIT) {
 			}
 			mem_free(&StrAddr);
 			break;

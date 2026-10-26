@@ -52,6 +52,8 @@
 #define BUF_SIZE				256					// バッファサイズ
 #define MAXSIZE					32768
 #define EDITMAXSIZE				30000
+#define DIR_MAX_LEN				(BUF_SIZE - 64)		// データ保存先のパスの最大長
+#define COPYDATA_MAX			(sizeof(TCHAR) * 32768)	// WM_COPYDATA で受け付ける最大サイズ
 
 #define SICONSIZE				Scale(16)			// 小さいアイコンのサイズ
 #define TB_ICONSIZE				16					// ツールバーのボタンサイズ
@@ -592,7 +594,7 @@ void SetDot(TCHAR *buf, TCHAR *ret);
 void DelDot(TCHAR *buf, TCHAR *ret);
 int WordBreakStringSize(TCHAR *buf, TCHAR *str, int BreakCnt, BOOL BreakFlag);
 void WordBreakString(TCHAR *buf, TCHAR *ret, TCHAR *str, int BreakCnt, BOOL BreakFlag);
-BOOL URLToMailItem(TCHAR *buf, MAILITEM *tpMailItem);
+BOOL URLToMailItem(TCHAR *buf, MAILITEM *tpMailItem, BOOL ExtHeader);
 TCHAR *GetMailAddress(TCHAR *buf, TCHAR *ret, BOOL quote);
 TCHAR *GetMailString(TCHAR *buf, TCHAR *ret);
 void SetUserName(TCHAR *buf, TCHAR *ret);
@@ -614,7 +616,7 @@ BOOL View_InitInstance(HINSTANCE hInstance, LPVOID lpParam, BOOL NoAppFlag);
 // Edit
 BOOL CALLBACK enum_windows_proc(const HWND hWnd, const LPARAM lParam);
 BOOL Edit_InitApplication(HINSTANCE hInstance);
-int Edit_MailToSet(HINSTANCE hInstance, HWND hWnd, TCHAR *mail_addr, int rebox);
+int Edit_MailToSet(HINSTANCE hInstance, HWND hWnd, TCHAR *mail_addr, int rebox, BOOL ExtHeader);
 int Edit_InitInstance(HINSTANCE hInstance, HWND hWnd, int rebox,
 					   MAILITEM *tpReMailItem, int OpenFlag, int ReplyFag);
 

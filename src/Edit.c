@@ -841,7 +841,7 @@ static BOOL AppEditMail(HWND hWnd, long id, char *buf, MAILITEM *tpMailItem)
 
 	SetCurrentDirectory(AppDir);
 
-	wsprintf(path, TEXT("%s%ld.%s"), DataDir, id, op.EditFileSuffix);
+	wsprintf(path, TEXT("%s%ld.%.16s"), DataDir, id, op.EditFileSuffix);
 
 	// 保存するファイルを開く
 	hFile = CreateFile(path, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -904,7 +904,7 @@ static BOOL ReadEditMail(HWND hWnd, long id, MAILITEM *tpMailItem, BOOL ReadFlag
 
 	SetCurrentDirectory(AppDir);
 
-	wsprintf(path, TEXT("%s%ld.%s"), DataDir, id, op.EditFileSuffix);
+	wsprintf(path, TEXT("%s%ld.%.16s"), DataDir, id, op.EditFileSuffix);
 
 	if (ReadFlag == FALSE) {
 		DeleteFile(path);
@@ -1252,9 +1252,39 @@ BOOL Edit_InitApplication(HINSTANCE hInstance)
 }
 
 /*
- * Edit_MailToSet - メールアドレスから送信メールの作成
+ * ConfirmURLAttach - URLで指定された添付ファイルの確認
  */
-int Edit_MailToSet(HINSTANCE hInstance, HWND hWnd, TCHAR *mail_addr, int rebox)
+static BOOL ConfirmURLAttach(HWND hWnd, TCHAR *Attach)
+{
+	TCHAR *msg, *p, *f;
+	int ret;
+
+	msg = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(STR_Q_URL_ATTACH) + lstrlen(Attach) + 1));
+	if (msg == NULL) {
+		return FALSE;
+	}
+	p = str_cpy_t(msg, STR_Q_URL_ATTACH);
+	for (f = Attach; *f != TEXT('\0'); f++) {
+#ifndef UNICODE
+		if (IsDBCSLeadByte((BYTE)*f) == TRUE && *(f + 1) != TEXT('\0')) {
+			*(p++) = *(f++);
+			*(p++) = *f;
+			continue;
+		}
+#endif
+		*(p++) = (*f == ATTACH_SEP) ? TEXT('\n') : *f;
+	}
+	*p = TEXT('\0');
+	ret = MessageBox(hWnd, msg, WINDOW_TITLE, MB_ICONEXCLAMATION | MB_YESNO | MB_DEFBUTTON2);
+	mem_free(&msg);
+	return ((ret == IDYES) ? TRUE : FALSE);
+}
+
+/*
+ * Edit_MailToSet - メールアドレスから送信メールの作成
+ *    ExtHeader が TRUE の場合は nPOP 固有の項目 (MailBox, Attach) を有効にする
+ */
+int Edit_MailToSet(HINSTANCE hInstance, HWND hWnd, TCHAR *mail_addr, int rebox, BOOL ExtHeader)
 {
 	static BOOL ExistFlag = FALSE;
 	MAILITEM *tpMailItem;
@@ -1271,9 +1301,15 @@ int Edit_MailToSet(HINSTANCE hInstance, HWND hWnd, TCHAR *mail_addr, int rebox)
 	}
 
 	// URL(mailto:)をメールアイテムに設定
-	if (URLToMailItem(mail_addr, tpMailItem) == FALSE) {
+	if (URLToMailItem(mail_addr, tpMailItem, ExtHeader) == FALSE) {
 		item_free(&tpMailItem, 1);
 		return FALSE;
+	}
+	// 添付ファイルが指定されている場合は確認する
+	if (tpMailItem->Attach != NULL && *tpMailItem->Attach != TEXT('\0') &&
+		ConfirmURLAttach(hWnd, tpMailItem->Attach) == FALSE) {
+		mem_free(&tpMailItem->Attach);
+		tpMailItem->Attach = NULL;
 	}
 	ExistFlag = TRUE;
 	ret = Edit_InitInstance(hInstance, hWnd, rebox, tpMailItem, EDIT_NEW, 0);
