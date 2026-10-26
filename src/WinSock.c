@@ -180,6 +180,10 @@ int recv_proc(HWND hWnd, SOCKET soc)
 	buf = recv_buf;
 	// –¢ˆ—•¶š—ñ‚ÆóM•¶š—ñ‚ğŒ‹‡
 	if (old_buf_len > 0 && old_buf != NULL) {
+		if (old_buf_len + buf_len > RECV_LINE_MAX) {
+			// ‰üs‚Ì–³‚¢s‚ª’·‚·‚¬‚é
+			return SELECT_SOC_ERROR;
+		}
 		if (old_buf_size < old_buf_len + buf_len) {
 			old_buf_size += buf_len;
 			buf = (char *)mem_alloc(old_buf_size);

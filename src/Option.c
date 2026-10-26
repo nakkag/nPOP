@@ -3301,7 +3301,9 @@ BOOL CALLBACK AttachNoticeProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 			break;
 		}
 		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_FROM), ai->from);
-		wsprintf(buf, TEXT("%s, %d %s"), ai->mime, (ai->size < 1024) ? ai->size : (ai->size / 1024), (ai->size < 1024) ? TEXT("byte") : TEXT("KB"));
+		// Content-Type ‚Íƒ[ƒ‹—R—ˆ‚Ì‚½‚ß•\Ž¦‚·‚é’·‚³‚ð§ŒÀ‚·‚é
+		wsprintf(buf, TEXT("%.200s, %d %s"), (ai->mime != NULL) ? ai->mime : TEXT(""),
+			(ai->size < 1024) ? ai->size : (ai->size / 1024), (ai->size < 1024) ? TEXT("byte") : TEXT("KB"));
 		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_TYPE), buf);
 		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_FILENAME), ai->fname);
 		break;

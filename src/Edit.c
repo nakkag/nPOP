@@ -681,7 +681,7 @@ static BOOL SetItemToSendBox(HWND hWnd, BOOL BodyFlag, int EndFlag)
 {
 	MAILITEM *tpMailItem;
 	TCHAR *buf, *tmp;
-	TCHAR numbuf[10];
+	TCHAR numbuf[16];
 	int len;
 	int i;
 

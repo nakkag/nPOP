@@ -176,6 +176,9 @@ static void mail_buf_free(void)
 static BOOL uidl_init(int size)
 {
 	uidl_free();
+	if (size <= 0 || size > MAX_MAIL_COUNT) {
+		return FALSE;
+	}
 	ui_size = size;
 	ui_pt = 0;
 	ui = (UIDL_INFO *)mem_calloc(sizeof(UIDL_INFO) * ui_size);
@@ -649,6 +652,13 @@ static int list_proc_stat(HWND hWnd, SOCKET soc, char *buf, int buflen, TCHAR *E
 	tpMailBox->MailCnt = a2i(p);
 	if (t != NULL) {
 		tpMailBox->MailSize = a2i(t);
+	}
+	if (tpMailBox->MailCnt < 0 || tpMailBox->MailCnt > MAX_MAIL_COUNT) {
+		// メール数が不正
+		tpMailBox->MailCnt = 0;
+		lstrcpy(ErrStr, STR_ERR_SOCK_STAT);
+		str_cat_n(ErrStr, buf, BUF_SIZE - 1);
+		return POP_ERR;
 	}
 	if (tpMailBox->MailCnt == 0 || tpMailBox->LastNo == -1) {
 		// メールボックスの初期化
@@ -1494,7 +1504,7 @@ static int exec_proc_dele(HWND hWnd, SOCKET soc, char *buf, int buflen, TCHAR *E
 		tpMailBox->LastNo--;
 	}
 	// 最後のメッセージが削除されている場合は一覧取得用メッセージIDを変更する
-	if (*(tpMailBox->tpMailItem + tpMailBox->MailItemCnt - 1) == NULL) {
+	if (tpMailBox->MailItemCnt > 0 && *(tpMailBox->tpMailItem + tpMailBox->MailItemCnt - 1) == NULL) {
 		tpMailItem = NULL;
 		for (i = 0; i < tpMailBox->MailItemCnt; i++) {
 			if (*(tpMailBox->tpMailItem + i) == NULL) {

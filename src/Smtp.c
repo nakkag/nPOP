@@ -815,6 +815,12 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 		break;
 
 	case SMTP_EHLO:
+		if (send_mail_box->SmtpSSL == 1 && send_mail_box->SmtpSSLInfo.Type == 4 &&
+			ssl == NULL && (status >= SMTP_ERRORSTATUS || starttls_flag == FALSE)) {
+			// STARTTLS が設定されているのにサーバが対応していない場合は平文で続行しない
+			lstrcpy(ErrStr, STR_ERR_SOCK_NOSTARTTLS);
+			return FALSE;
+		}
 		if (status >= SMTP_ERRORSTATUS) {
 			// EHLO に失敗した場合は HELO を送信し直す
 			command_status = SMTP_START;
@@ -874,6 +880,10 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 		case AUTH_PLAIN:
 			// AUTH PLAIN
 			user = (send_mail_box->AuthUserPass == 1) ? send_mail_box->SmtpUser : send_mail_box->User;
+			if (user == NULL || *user == TEXT('\0')) {
+				lstrcpy(ErrStr, STR_ERR_SOCK_NOUSERID);
+				return FALSE;
+			}
 			pass = auth_get_password(send_mail_box);
 			if (pass == NULL || *pass == TEXT('\0')) {
 				lstrcpy(ErrStr, STR_ERR_SOCK_NOPASSWORD);
@@ -915,6 +925,10 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 		}
 		// AUTH CRAM-MD5のパスワードを作成
 		user = (send_mail_box->AuthUserPass == 1) ? send_mail_box->SmtpUser : send_mail_box->User;
+		if (user == NULL || *user == TEXT('\0')) {
+			lstrcpy(ErrStr, STR_ERR_SOCK_NOUSERID);
+			return FALSE;
+		}
 		pass = auth_get_password(send_mail_box);
 		if (pass == NULL || *pass == TEXT('\0')) {
 			lstrcpy(ErrStr, STR_ERR_SOCK_NOPASSWORD);
@@ -962,6 +976,10 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 			return FALSE;
 		}
 		user = (send_mail_box->AuthUserPass == 1) ? send_mail_box->SmtpUser : send_mail_box->User;
+		if (user == NULL || *user == TEXT('\0')) {
+			lstrcpy(ErrStr, STR_ERR_SOCK_NOUSERID);
+			return FALSE;
+		}
 		p = (TCHAR *)mem_calloc(sizeof(TCHAR) * (lstrlen(user) * 2 + 4));
 		if (p == NULL) {
 			lstrcpy(ErrStr, STR_ERR_MEMALLOC);

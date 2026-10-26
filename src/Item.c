@@ -67,6 +67,9 @@ BOOL item_set_count(MAILBOX *tpMailBox, int i)
 		tpMailBox->AllocCnt = tpMailBox->MailItemCnt;
 		return TRUE;
 	}
+	if (i > MAX_MAIL_COUNT) {
+		return FALSE;
+	}
 	tpMailList = (MAILITEM **)mem_calloc(sizeof(MAILITEM *) * i);
 	if (tpMailList == NULL) {
 		return FALSE;

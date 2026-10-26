@@ -54,6 +54,8 @@
 #define EDITMAXSIZE				30000
 #define DIR_MAX_LEN				(BUF_SIZE - 64)		// データ保存先のパスの最大長
 #define PASS_BUF_SIZE			1024				// 暗号化したパスワードのバッファサイズ
+#define MAX_MAIL_COUNT			1000000				// サーバから受け取るメール数の上限
+#define RECV_LINE_MAX			(1024 * 1024)		// 受信する1行の最大バイト数
 #define COPYDATA_MAX			(sizeof(TCHAR) * 32768)	// WM_COPYDATA で受け付ける最大サイズ
 
 #define SICONSIZE				Scale(16)			// 小さいアイコンのサイズ

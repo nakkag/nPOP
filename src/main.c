@@ -3024,11 +3024,14 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 		case FD_READ:						/* 受信バッファにデータがある事を示すイベント */
 			/* データを受信して蓄積する */
-			if (recv_proc(hWnd, g_soc) == SELECT_MEM_ERROR) {
-				// メモリエラー
-				ErrorSocketEnd(hWnd, RecvBox);
-				SocketErrorMessage(hWnd, STR_ERR_MEMALLOC, RecvBox);
-				break;
+			{
+				int rret = recv_proc(hWnd, g_soc);
+				if (rret == SELECT_MEM_ERROR || rret == SELECT_SOC_ERROR) {
+					// メモリエラー / 受信データ異常
+					ErrorSocketEnd(hWnd, RecvBox);
+					SocketErrorMessage(hWnd, (rret == SELECT_MEM_ERROR) ? STR_ERR_MEMALLOC : STR_ERR_SOCK_SENDRECV, RecvBox);
+					break;
+				}
 			}
 			SetTimer(hWnd, ID_TIMEOUT_TIMER, TIMEOUTTIME * op.TimeoutInterval, NULL);
 			break;
@@ -3086,6 +3089,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		{
 			TCHAR ErrStr[BUF_SIZE];
 
+			if (g_soc == -1 || RecvBox < 0 || RecvBox >= MailBoxCnt || lParam == 0 || command_proc == NULL) {
+				return FALSE;
+			}
 			*ErrStr = TEXT('\0');
 			if (command_proc(hWnd, g_soc, (char *)lParam, wParam, ErrStr,
 				(MailBox + RecvBox), RecvBox == SelBox) == FALSE) {
@@ -3103,7 +3109,8 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 
 	// メール送信
 	case WM_SMTP_SENDMAIL:
-		if (g_soc != -1 || lParam == 0) {
+		if (g_soc != -1 || lParam == 0 ||
+			item_is_mailbox(MailBox + MAILBOX_SEND, (MAILITEM *)lParam) == FALSE) {
 			break;
 		}
 		wkSendMailItem = (MAILITEM *)lParam;

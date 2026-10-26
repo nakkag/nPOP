@@ -87,6 +87,7 @@
 									TEXT("送信先メールアドレスが正しく設定されているか確認してください\n\n")
 #define STR_ERR_SOCK_DATA			TEXT("DATAに失敗しました\n\n")
 #define STR_ERR_SOCK_MAILSEND		TEXT("メール送信に失敗しました\n\n")
+#define STR_ERR_SOCK_NOSTARTTLS		TEXT("サーバがSTARTTLSに対応していないため暗号化できません")
 #define STR_ERR_SOCK_SSL_INIT		TEXT("SSLの初期化に失敗しました")
 #define STR_ERR_SOCK_SSL_VERIFY		TEXT("サーバ証明書の検証に失敗しました")
 

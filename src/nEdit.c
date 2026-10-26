@@ -2807,10 +2807,16 @@ static LRESULT CALLBACK nedit_proc(const HWND hWnd, const UINT msg, const WPARAM
 		if (wParam < 0 || wParam >= (WPARAM)bf->line_len) {
 			return 0;
 		}
-		CopyMemory((TCHAR *)lParam,
-			index_to_char(bf, line_get(bf, wParam)),
-			sizeof(TCHAR) * line_get_length(bf, line_get(bf, wParam)));
-		return line_get_length(bf, line_get(bf, wParam));
+		{
+			// バッファの先頭 WORD に格納された受け取り可能な文字数で制限する
+			int max_len = *((WORD *)lParam);
+			int len = line_get_length(bf, line_get(bf, wParam));
+			if (len > max_len) {
+				len = max_len;
+			}
+			CopyMemory((TCHAR *)lParam, index_to_char(bf, line_get(bf, wParam)), sizeof(TCHAR) * len);
+			return len;
+		}
 
 	case EM_GETLINECOUNT:
 		// 行数取得
