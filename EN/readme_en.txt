@@ -47,6 +47,8 @@ held on a server.
         ・The attach and mailbox parameters of mailto: are now accepted only from the command line
         ・On an unencrypted connection, SMTP authentication that sends the password as plain text (LOGIN/PLAIN) is no longer selected automatically
         ・The APOP timestamp is now validated
+        ・Opening attachments is safer (long file names keep their extension, executable types always ask for confirmation, a file is not opened when Zone.Identifier cannot be written)
+        ・The attach parameter of mailto: now accepts up to 10 existing files given as absolute paths
     ・Fixed long passwords being lost when saved
 
 ・Ver 1.2.6 -> Ver 1.2.7

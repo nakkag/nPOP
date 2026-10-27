@@ -30,7 +30,6 @@ extern MAILBOX *MailBox;
 /* Local Function Prototypes */
 static int file_get_mail_count(char *buf, long Size);
 static BOOL file_save_address_item(HANDLE hFile, MAILITEM *tpMailItem);
-static void file_set_zone_identifier(TCHAR *path);
 static BOOL filename_is_device(TCHAR *buf);
 static BOOL file_save_exec_write(TCHAR *path, TCHAR *tmp_path, char *buf, int len);
 
@@ -186,6 +185,17 @@ static BOOL filename_is_device(TCHAR *buf)
 			return TRUE;
 		}
 	}
+	// COM と LPT に上付き数字 (U+00B9, U+00B2, U+00B3) が続く名前もデバイス名として扱われる
+	if (len == 4 && (str_cmp_ni_t(buf, TEXT("COM"), 3) == 0 || str_cmp_ni_t(buf, TEXT("LPT"), 3) == 0)) {
+		unsigned int c = (TBYTE)*(buf + 3);
+		if ((c == 0xB9 || c == 0xB2 || c == 0xB3)
+#ifndef UNICODE
+			&& GetACP() == 1252
+#endif
+			) {
+			return TRUE;
+		}
+	}
 	return FALSE;
 }
 
@@ -227,9 +237,10 @@ void filename_conv(TCHAR *buf)
 				*p = TEXT('_');
 			}
 #ifdef UNICODE
-			// 表示方向の制御文字 (拡張子の偽装に使われる)
-			if (*p == 0x200E || *p == 0x200F ||
-				(*p >= 0x202A && *p <= 0x202E) || (*p >= 0x2066 && *p <= 0x2069)) {
+			// 表示方向の制御文字と幅のない文字 (拡張子の偽装に使われる)
+			if (*p == 0x061C || (*p >= 0x200B && *p <= 0x200F) ||
+				(*p >= 0x202A && *p <= 0x202E) || *p == 0x2060 ||
+				(*p >= 0x2066 && *p <= 0x2069) || *p == 0xFEFF) {
 				*p = TEXT('_');
 			}
 #endif
@@ -309,7 +320,10 @@ long file_get_size(TCHAR *FileName)
 	FindClose(hFindFile);
 
 	if ((FindData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-		// ディレクトリではない場合はサイズを返す
+		// ディレクトリではない場合はサイズを返す (long で表せない大きさは扱わない)
+		if (FindData.nFileSizeHigh != 0 || FindData.nFileSizeLow > 0x7FFFFFFF) {
+			return -1;
+		}
 		return (long)FindData.nFileSizeLow;
 	}
 	return -1;
@@ -365,7 +379,7 @@ char *file_read(TCHAR *path, long FileSize)
 		return NULL;
 	}
 
-	if (ReadFile(hFile, cBuf, FileSize, &ret, NULL) == FALSE) {
+	if (ReadFile(hFile, cBuf, FileSize, &ret, NULL) == FALSE || ret != (DWORD)FileSize) {
 		mem_free(&cBuf);
 		CloseHandle(hFile);
 		return NULL;
@@ -801,6 +815,122 @@ BOOL file_write_utf8(HANDLE hFile, TCHAR* buf)
 }
 
 /*
+ * filename_next_char - 次の文字の位置を取得する (2バイト文字とサロゲートペアを分けない)
+ */
+TCHAR *filename_next_char(TCHAR *p)
+{
+	if (*p == TEXT('\0')) {
+		return p;
+	}
+#ifdef UNICODE
+	if (*p >= 0xD800 && *p <= 0xDBFF && *(p + 1) >= 0xDC00 && *(p + 1) <= 0xDFFF) {
+		return p + 2;
+	}
+#else
+	if (IsDBCSLeadByte((BYTE)*p) == TRUE && *(p + 1) != TEXT('\0')) {
+		return p + 2;
+	}
+#endif
+	return p + 1;
+}
+
+/*
+ * filename_cut_pos - 文字の途中で切れないように指定の長さ以内の位置を取得する
+ */
+static TCHAR *filename_cut_pos(TCHAR *buf, int len)
+{
+	TCHAR *p, *n;
+
+	for (p = buf; *p != TEXT('\0'); p = n) {
+		n = filename_next_char(p);
+		if (n - buf > len) {
+			break;
+		}
+	}
+	return p;
+}
+
+/*
+ * filename_attach_conv - 添付ファイル名を保存できる形に変換する
+ *    長すぎる名前は拡張子を残して途中を切る
+ */
+void filename_attach_conv(TCHAR *buf)
+{
+#define ATTACH_NAME_MAX		(BUF_SIZE - 50)
+	TCHAR *p, *ext = NULL;
+	int ext_len = 0;
+
+	filename_conv(buf);
+	if (lstrlen(buf) <= ATTACH_NAME_MAX) {
+		return;
+	}
+	for (p = buf; *p != TEXT('\0'); p = filename_next_char(p)) {
+		if (*p == TEXT('.')) {
+			ext = p;
+		}
+	}
+	if (ext != NULL) {
+		ext_len = lstrlen(ext);
+	}
+	if (ext != NULL && ext_len <= ATTACH_NAME_MAX / 4) {
+		p = filename_cut_pos(buf, ATTACH_NAME_MAX - ext_len);
+		MoveMemory(p, ext, sizeof(TCHAR) * (ext_len + 1));
+	} else {
+		// 拡張子が無いか長すぎる場合は切った位置が拡張子にならないよう末尾に _ を付ける
+		p = filename_cut_pos(buf, ATTACH_NAME_MAX - 1);
+		*(p++) = TEXT('_');
+		*p = TEXT('\0');
+	}
+	filename_conv(buf);
+}
+
+/*
+ * filename_is_dangerous - 開くとプログラムなどが実行される種類のファイルか
+ */
+BOOL filename_is_dangerous(TCHAR *buf)
+{
+	TCHAR *exts[] = {
+		TEXT("exe"), TEXT("com"), TEXT("scr"), TEXT("pif"), TEXT("bat"), TEXT("cmd"),
+		TEXT("vb"), TEXT("vbs"), TEXT("vbe"), TEXT("js"), TEXT("jse"), TEXT("ws"),
+		TEXT("wsf"), TEXT("wsh"), TEXT("wsc"), TEXT("sct"), TEXT("msi"), TEXT("msp"),
+		TEXT("mst"), TEXT("hta"), TEXT("cpl"), TEXT("msc"), TEXT("lnk"), TEXT("url"),
+		TEXT("scf"), TEXT("reg"), TEXT("inf"), TEXT("ins"), TEXT("isp"), TEXT("chm"),
+		TEXT("hlp"), TEXT("jar"), TEXT("ps1"), TEXT("ps1xml"), TEXT("ps2"), TEXT("ps2xml"),
+		TEXT("psc1"), TEXT("psc2"), TEXT("psm1"), TEXT("psd1"), TEXT("msh"), TEXT("msh1"),
+		TEXT("msh2"), TEXT("mshxml"), TEXT("msh1xml"), TEXT("msh2xml"), TEXT("gadget"),
+		TEXT("application"), TEXT("appref-ms"), TEXT("settingcontent-ms"), TEXT("library-ms"),
+		TEXT("search-ms"), TEXT("searchconnector-ms"), TEXT("website"), TEXT("shb"), TEXT("shs"),
+		TEXT("xbap"), TEXT("xll"), TEXT("diagcab"), TEXT("appx"), TEXT("appxbundle"),
+		TEXT("msix"), TEXT("msixbundle"), TEXT("iso"), TEXT("img"), TEXT("vhd"), TEXT("vhdx"),
+		TEXT("py"), TEXT("pyw"), TEXT("pyz"), TEXT("dll"), TEXT("ocx"), TEXT("sys"),
+		TEXT("drv"), TEXT("cab"), TEXT("crt"), TEXT("der"), TEXT("job"), TEXT("one"),
+		TEXT("docm"), TEXT("dotm"), TEXT("xlsm"), TEXT("xltm"), TEXT("xlam"), TEXT("pptm"),
+		TEXT("potm"), TEXT("ppam"), TEXT("ppsm"), TEXT("sldm"), TEXT("mde"), TEXT("mdb"),
+		TEXT("accde"), TEXT("ade"), TEXT("adp"),
+	};
+	TCHAR *p, *ext = NULL;
+	int i;
+
+	if (buf == NULL) {
+		return FALSE;
+	}
+	for (p = buf; *p != TEXT('\0'); p = filename_next_char(p)) {
+		if (*p == TEXT('.')) {
+			ext = p + 1;
+		}
+	}
+	if (ext == NULL) {
+		return FALSE;
+	}
+	for (i = 0; i < sizeof(exts) / sizeof(TCHAR *); i++) {
+		if (lstrcmpi(ext, exts[i]) == 0) {
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+/*
  * file_save - ファイルの保存
  */
 BOOL file_save(HWND hWnd, TCHAR *FileName, TCHAR *Ext, char *buf, int len)
@@ -832,31 +962,92 @@ BOOL file_save(HWND hWnd, TCHAR *FileName, TCHAR *Ext, char *buf, int len)
 	}
 	SwitchCursor(TRUE);
 	CloseHandle(hFile);
-	file_set_zone_identifier(path);
+	if (file_set_zone_identifier(path) == FALSE) {
+		ErrorMessage(hWnd, STR_ERR_ATTACH_ZONE_SAVE);
+	}
 	return TRUE;
 }
 
 /*
- * file_set_zone_identifier - インターネットから取得したファイルとして記録する (Mark of the Web)
+ * file_write_zone_identifier - 完全パスのファイルに Zone.Identifier を書き込む
  */
-static void file_set_zone_identifier(TCHAR *path)
+static BOOL file_write_zone_identifier(WCHAR *full, int len)
 {
 	HANDLE hFile;
-	TCHAR *ads;
-	DWORD ret;
+	WCHAR *ads;
+	WCHAR vol[MAX_PATH];
+	DWORD ret, flags;
 	char *zone = "[ZoneTransfer]\r\nZoneId=3\r\n";
+	BOOL rc = FALSE;
 
-	ads = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(path) + lstrlen(TEXT(":Zone.Identifier")) + 1));
-	if (ads == NULL) {
-		return;
+	// 代替データストリームを持てないボリューム (FAT など) には記録できない
+	if (GetVolumePathNameW(full, vol, MAX_PATH) != FALSE &&
+		GetVolumeInformationW(vol, NULL, 0, NULL, NULL, &flags, NULL, 0) != FALSE &&
+		(flags & FILE_NAMED_STREAMS) == 0) {
+		return TRUE;
 	}
-	str_join_t(ads, path, TEXT(":Zone.Identifier"), (TCHAR *)-1);
-	hFile = CreateFile(ads, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hFile != NULL && hFile != (HANDLE)-1) {
-		WriteFile(hFile, zone, tstrlen(zone), &ret, NULL);
+	// MAX_PATH を超えても書き込めるように \\?\ 形式のパスを使う
+	ads = (WCHAR *)mem_alloc(sizeof(WCHAR) * (len + lstrlenW(L"\\\\?\\UNC") + lstrlenW(L":Zone.Identifier") + 1));
+	if (ads == NULL) {
+		return FALSE;
+	}
+	if (*full == L'\\' && *(full + 1) == L'\\') {
+		if (*(full + 2) == L'?' || *(full + 2) == L'.') {
+			lstrcpyW(ads, full);
+		} else {
+			lstrcpyW(ads, L"\\\\?\\UNC");
+			lstrcatW(ads, full + 1);
+		}
+	} else {
+		lstrcpyW(ads, L"\\\\?\\");
+		lstrcatW(ads, full);
+	}
+	lstrcatW(ads, L":Zone.Identifier");
+	hFile = CreateFileW(ads, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile != INVALID_HANDLE_VALUE) {
+		if (WriteFile(hFile, zone, tstrlen(zone), &ret, NULL) != FALSE && ret == (DWORD)tstrlen(zone)) {
+			rc = TRUE;
+		}
 		CloseHandle(hFile);
 	}
 	mem_free(&ads);
+	return rc;
+}
+
+/*
+ * file_set_zone_identifier - インターネットから取得したファイルとして記録する (Mark of the Web)
+ *    記録できなかった場合は FALSE を返す
+ */
+BOOL file_set_zone_identifier(TCHAR *path)
+{
+	WCHAR *wpath, *full;
+	int len;
+	BOOL rc = FALSE;
+
+#ifdef UNICODE
+	wpath = path;
+#else
+	len = MultiByteToWideChar(CP_ACP, 0, path, -1, NULL, 0);
+	wpath = (WCHAR *)mem_alloc(sizeof(WCHAR) * len);
+	if (wpath == NULL) {
+		return FALSE;
+	}
+	MultiByteToWideChar(CP_ACP, 0, path, -1, wpath, len);
+#endif
+	len = GetFullPathNameW(wpath, 0, NULL, NULL);
+	if (len > 0) {
+		full = (WCHAR *)mem_alloc(sizeof(WCHAR) * len);
+		if (full != NULL) {
+			if (GetFullPathNameW(wpath, len, full, NULL) > 0) {
+				rc = file_write_zone_identifier(full, len);
+			}
+			mem_free(&full);
+		}
+	}
+#ifndef UNICODE
+	mem_free(&wpath);
+#endif
+	return rc;
 }
 
 /*
@@ -896,7 +1087,13 @@ BOOL file_save_exec(HWND hWnd, TCHAR *FileName, char *buf, int len)
 		mem_free(&path);
 		return FALSE;
 	}
-	file_set_zone_identifier(path);
+	if (file_set_zone_identifier(path) == FALSE) {
+		// インターネットから取得した印が無いと警告なしに実行されるため開かない
+		DeleteFile(path);
+		mem_free(&path);
+		ErrorMessage(hWnd, STR_ERR_ATTACH_ZONE);
+		return TRUE;
+	}
 
 	// 実行
 	ZeroMemory(&sei, sizeof(SHELLEXECUTEINFO));

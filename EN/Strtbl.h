@@ -39,6 +39,9 @@
 #define STR_ERR_INIT				TEXT("Initialization error")
 #define STR_ERR_OPEN				TEXT("Open File error")
 #define STR_ERR_SAVEEND				TEXT("Save File error\nContinue to exit?")
+#define STR_ERR_ATTACH_ZONE			TEXT("Could not record that the file came from the Internet (Zone.Identifier), so it was not opened.")
+#define STR_ERR_ATTACH_ZONE_SAVE	TEXT("The file was saved, but could not be marked as coming from the Internet (Zone.Identifier).\nTreat it as untrusted.")
+#define STR_ERR_URL_ATTACH			TEXT("The specified attachments include entries that cannot be used (not an absolute path, missing, too many, etc.), so nothing is attached.")
 #define STR_ERR_SAVE				TEXT("Save File error")
 #define STR_ERR_ADD					TEXT("Address not added")
 #define STR_ERR_VIEW				TEXT("Display failed")
@@ -78,7 +81,7 @@
 #define STR_ERR_SOCK_TOP			TEXT("TOP failed\n\n")
 #define STR_ERR_SOCK_RETR			TEXT("RETR failed\n\n")
 #define STR_ERR_SOCK_DELE			TEXT("Deletion failed\n\n")
-#define STR_ERR_SOCK_NOATTACH		TEXT("Attached file was not found")
+#define STR_ERR_SOCK_NOATTACH		TEXT("Attached file not found or could not be read (files that are too large cannot be attached)")
 #define STR_ERR_SOCK_BADFROM		TEXT("The sender's mail address is not set correctly")
 #define STR_ERR_SOCK_HELO 			TEXT("HELO failed\n")\
 									TEXT("Please check that the sender's mail address is set correctly\n\n")
@@ -112,6 +115,10 @@
 #define STR_Q_SENDMAIL				TEXT("Send it?")
 #define STR_Q_ATTACH				TEXT("If the attached file contains a virus or similar,\n")\
 									TEXT("it may damage your computer.\n\n")\
+									TEXT("Do you want to open it?")
+
+#define STR_Q_ATTACH_DANGER			TEXT("Opening this type of file may run a program or script.\n")\
+									TEXT("Do not open it unless you trust the sender and the content.\n\n")\
 									TEXT("Do you want to open it?")
 
 #define STR_Q_URL_ATTACH			TEXT("A new mail will be created with the following files attached.\n")\

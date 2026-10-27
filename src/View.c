@@ -109,6 +109,8 @@ static void SetReMessage(HWND hWnd, int ReplyFag);
 static BOOL Decode(HWND hWnd, int id);
 static BOOL SaveViewMail(TCHAR *fname, HWND hWnd, int MailBoxIndex, MAILITEM *tpMailItem, TCHAR *head);
 static BOOL AppViewMail(MAILITEM *tpMailItem);
+static TCHAR *MenuTextEscape(TCHAR *buf);
+static BOOL ConfirmOpenAttach(HWND hWnd, TCHAR *fname);
 static void SetMark(HWND hWnd, MAILITEM *tpMailItem, const int mark);
 static void GetMarkStatus(HWND hWnd, MAILITEM *tpMailItem);
 static LRESULT CALLBACK ViewProc(HWND hWnd, UINT msg, WPARAM wParam,LPARAM lParam);
@@ -665,7 +667,7 @@ static int SetAttachMenu(HWND hWnd, MAILITEM *tpMailItem, BOOL ViewSrc)
 {
 	HMENU hMenu;
 	TCHAR *str;
-	TCHAR *p, *r;
+	TCHAR *p, *q, *r;
 	int i, ret = -1;
 	int mFlag;
 	BOOL AppendFlag = FALSE;
@@ -712,18 +714,21 @@ static int SetAttachMenu(HWND hWnd, MAILITEM *tpMailItem, BOOL ViewSrc)
 				for (r = str; *r != TEXT('\0') && *r != TEXT(';'); r++);
 				*r = TEXT('\0');
 			}
-#ifdef UNICODE
-			if ((*(tpMultiPart + i))->Filename != NULL) {
+if ((*(tpMultiPart + i))->Filename != NULL) {
+				// 保存するときと同じ名前を表示する
 				p = alloc_char_to_tchar((*(tpMultiPart + i))->Filename);
+				if (p != NULL) {
+					filename_attach_conv(p);
+				}
 				mem_free(&str);
 				str = p;
 			} else {
 				p = str;
 			}
-#else
-			p = ((*(tpMultiPart + i))->Filename != NULL) ? (*(tpMultiPart + i))->Filename : str;
-#endif
-			AppendMenu(hMenu, MF_STRING | mFlag, ID_ATTACH + i, ((p != NULL && *p != TEXT('\0')) ? p : TEXT("Attach")));
+			q = MenuTextEscape(p);
+			AppendMenu(hMenu, MF_STRING | mFlag, ID_ATTACH + i,
+				((q != NULL && *q != TEXT('\0')) ? q : TEXT("Attach")));
+			mem_free(&q);
 			mem_free(&str);
 		}
 	}
@@ -1299,6 +1304,57 @@ static void SetReMessage(HWND hWnd, int ReplyFag)
 }
 
 /*
+ * MenuTextEscape - メニューに表示する文字列の & をエスケープする
+ */
+static TCHAR *MenuTextEscape(TCHAR *buf)
+{
+	TCHAR *ret, *p, *r;
+
+	if (buf == NULL) {
+		return NULL;
+	}
+	ret = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(buf) * 2 + 1));
+	if (ret == NULL) {
+		return NULL;
+	}
+	for (p = buf, r = ret; *p != TEXT('\0'); p++) {
+		if (*p == TEXT('&')) {
+			*(r++) = TEXT('&');
+		}
+		*(r++) = *p;
+	}
+	*r = TEXT('\0');
+	return ret;
+}
+
+/*
+ * ConfirmOpenAttach - 添付ファイルを開く前の確認
+ */
+static BOOL ConfirmOpenAttach(HWND hWnd, TCHAR *fname)
+{
+	TCHAR *msg, *q;
+	BOOL danger;
+	int ret;
+
+	if (fname == NULL) {
+		return FALSE;
+	}
+	danger = filename_is_dangerous(fname);
+	if (op.AttachWarning == 0 && danger == FALSE) {
+		return TRUE;
+	}
+	q = (danger == TRUE) ? STR_Q_ATTACH_DANGER : STR_Q_ATTACH;
+	msg = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(fname) + 2 + lstrlen(q) + 1));
+	if (msg == NULL) {
+		return FALSE;
+	}
+	str_join_t(msg, fname, TEXT("\n\n"), q, (TCHAR *)-1);
+	ret = MessageBox(hWnd, msg, STR_TITLE_ATTACH_MSG, MB_ICONEXCLAMATION | MB_YESNO | MB_DEFBUTTON2);
+	mem_free(&msg);
+	return ((ret == IDYES) ? TRUE : FALSE);
+}
+
+/*
  * Decode - 添付ファイルをデコードして保存
  */
 static BOOL Decode(HWND hWnd, int id)
@@ -1394,12 +1450,8 @@ static BOOL Decode(HWND hWnd, int id)
 	}
 
 	if (fname != NULL) {
-		// ファイル名に使えない文字は _ に変換する
-		filename_conv(fname);
-		// ファイル名が長すぎる場合は途中で切る
-		if (lstrlen(fname) > BUF_SIZE - 50) {
-			*(fname + BUF_SIZE - 50) = TEXT('\0');
-		}
+		// ファイル名に使えない文字を変換し、長すぎる場合は拡張子を残して途中を切る
+		filename_attach_conv(fname);
 	}
 	SwitchCursor(TRUE);
 
@@ -1418,8 +1470,7 @@ static BOOL Decode(HWND hWnd, int id)
 
 		case 1:
 			// 保存して実行
-			if (op.AttachWarning == 0 ||
-				MessageBox(hWnd, STR_Q_ATTACH, STR_TITLE_ATTACH_MSG, MB_ICONEXCLAMATION | MB_YESNO | MB_DEFBUTTON2) == IDYES) {
+			if (ConfirmOpenAttach(hWnd, fname) == TRUE) {
 				if (op.AttachDelete != 0) {
 					wsprintf(buf, TEXT("%s%s"), ATTACH_FILE, fname);
 					p = buf;
@@ -1602,6 +1653,11 @@ static BOOL AppViewMail(MAILITEM *tpMailItem)
 	// メールをファイルに保存
 	wsprintf(path, TEXT("%s%s.%.16s"), DataDir, VIEW_FILE, op.ViewFileSuffix);
 	if (SaveViewMail(path, NULL, 0, tpMailItem, op.ViewFileHeader) == FALSE) {
+		return FALSE;
+	}
+	// メールの内容はインターネットから取得したものとして開く
+	if (file_set_zone_identifier(path) == FALSE) {
+		DeleteFile(path);
 		return FALSE;
 	}
 

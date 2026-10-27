@@ -2105,6 +2105,10 @@ BOOL CALLBACK SetAttachProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DROPFILES:
 		len = DragQueryFile((HANDLE)wParam, 0xFFFFFFFF, NULL, 0);
 		for (i = 0; i < len; i++) {
+			// 途中で切れてしまう長いパスは追加しない
+			if (DragQueryFile((HANDLE)wParam, i, NULL, 0) >= BUF_SIZE - 1) {
+				continue;
+			}
 			DragQueryFile((HANDLE)wParam, i, fpath, BUF_SIZE - 1);
 			SendMessage(hDlg, WM_COMMAND, ID_FILE_ADD, (LPARAM)fpath);
 		}
@@ -3284,6 +3288,36 @@ BOOL CALLBACK NewMailMessageProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 }
 
 /*
+ * SetStaticNoPrefix - スタティックコントロールで & を表示する
+ */
+static void SetStaticNoPrefix(HWND hWnd)
+{
+	SetWindowLong(hWnd, GWL_STYLE, GetWindowLong(hWnd, GWL_STYLE) | SS_NOPREFIX);
+}
+
+/*
+ * SetAttachNameText - 添付ファイル名を拡張子が見えるように設定する
+ */
+static void SetAttachNameText(HWND hWnd, TCHAR *fname)
+{
+#define ATTACH_NAME_VIEW	40
+	TCHAR buf[BUF_SIZE];
+	TCHAR *p, *n;
+
+	if (fname == NULL || lstrlen(fname) <= ATTACH_NAME_VIEW * 2) {
+		SetWindowText(hWnd, (fname != NULL) ? fname : TEXT(""));
+		return;
+	}
+	// 長い名前は途中を省略して先頭と末尾を表示する
+	for (p = fname; (n = filename_next_char(p)) - fname <= ATTACH_NAME_VIEW && *p != TEXT('\0'); p = n);
+	lstrcpyn(buf, fname, (int)(p - fname) + 1);
+	lstrcat(buf, TEXT(" ... "));
+	for (p = fname + lstrlen(fname) - ATTACH_NAME_VIEW, n = fname; n < p; n = filename_next_char(n));
+	lstrcat(buf, n);
+	SetWindowText(hWnd, buf);
+}
+
+/*
  * AttachNoticeProc - 添付確認プロシージャ
  */
 BOOL CALLBACK AttachNoticeProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -3300,12 +3334,14 @@ BOOL CALLBACK AttachNoticeProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 		if (ai == NULL) {
 			break;
 		}
+		SetStaticNoPrefix(GetDlgItem(hDlg, IDC_STATIC_FROM));
 		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_FROM), ai->from);
 		// Content-Type はメール由来のため表示する長さを制限する
 		wsprintf(buf, TEXT("%.200s, %d %s"), (ai->mime != NULL) ? ai->mime : TEXT(""),
 			(ai->size < 1024) ? ai->size : (ai->size / 1024), (ai->size < 1024) ? TEXT("byte") : TEXT("KB"));
 		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_TYPE), buf);
-		SetWindowText(GetDlgItem(hDlg, IDC_STATIC_FILENAME), ai->fname);
+		SetStaticNoPrefix(GetDlgItem(hDlg, IDC_STATIC_FILENAME));
+		SetAttachNameText(GetDlgItem(hDlg, IDC_STATIC_FILENAME), ai->fname);
 		break;
 
 	case WM_CLOSE:

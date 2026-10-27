@@ -976,11 +976,15 @@ static LRESULT CALLBACK EditProc(HWND hWnd, UINT msg, WPARAM wParam,LPARAM lPara
 		tpMailItem = (MAILITEM *)GetWindowLong(hWnd, GWL_USERDATA);
 		if (tpMailItem != NULL) {
 			TCHAR fpath[BUF_SIZE], *p;
-			int i, len, size = 0;
+			int i, n, len, size = 0;
 
 			len = DragQueryFile((HANDLE)wParam, 0xFFFFFFFF, NULL, 0);
 			// サイズ取得
 			for (i = 0; i < len; i++) {
+				// 途中で切れてしまう長いパスは添付しない
+				if (DragQueryFile((HANDLE)wParam, i, NULL, 0) >= BUF_SIZE - 1) {
+					continue;
+				}
 				DragQueryFile((HANDLE)wParam, i, fpath, BUF_SIZE - 1);
 				if (dir_check(fpath) == FALSE) {
 					size += lstrlen(fpath) + 1;
@@ -996,16 +1000,26 @@ static LRESULT CALLBACK EditProc(HWND hWnd, UINT msg, WPARAM wParam,LPARAM lPara
 				DragFinish((HANDLE)wParam);
 				break;
 			}
-			// ファイルリスト生成
+			// ファイルリスト生成 (フォルダは含めない)
 			for (i = 0; i < len; i++) {
+				if (DragQueryFile((HANDLE)wParam, i, NULL, 0) >= BUF_SIZE - 1) {
+					continue;
+				}
+				DragQueryFile((HANDLE)wParam, i, fpath, BUF_SIZE - 1);
+				if (dir_check(fpath) == TRUE) {
+					continue;
+				}
+				n = lstrlen(fpath) + ((p != tmp_attach) ? 1 : 0);
+				if ((p - tmp_attach) + n > size) {
+					// サイズ取得の後にファイルとフォルダが入れ替わった場合
+					break;
+				}
 				if (p != tmp_attach) {
 					*(p++) = ATTACH_SEP;
 				}
-				DragQueryFile((HANDLE)wParam, i, fpath, BUF_SIZE - 1);
-				if (dir_check(fpath) == FALSE) {
-					p = str_cpy_t(p, fpath);
-				}
+				p = str_cpy_t(p, fpath);
 			}
+			*p = TEXT('\0');
 			DragFinish((HANDLE)wParam);
 			// 添付設定ダイアログ表示
 			SendMessage(hWnd, WM_COMMAND, ID_MENUITEM_ATTACH, 0);
@@ -1252,6 +1266,44 @@ BOOL Edit_InitApplication(HINSTANCE hInstance)
 }
 
 /*
+ * CheckURLAttach - URLで指定された添付ファイルが使用できるかチェックする
+ *    ドライブから始まる絶対パスで、存在するファイルのみ、URL_ATTACH_MAX 個まで
+ */
+static BOOL CheckURLAttach(TCHAR *Attach)
+{
+	TCHAR *fpath, *f, *p;
+	int cnt = 0;
+	BOOL ret = TRUE;
+
+	fpath = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(Attach) + 1));
+	if (fpath == NULL) {
+		return FALSE;
+	}
+	f = Attach;
+	while (*f != TEXT('\0') && ret == TRUE) {
+		f = str_cpy_f_t(fpath, f, ATTACH_SEP);
+		cnt++;
+		if (cnt > URL_ATTACH_MAX || lstrlen(fpath) >= BUF_SIZE ||
+			!((*fpath >= TEXT('A') && *fpath <= TEXT('Z')) || (*fpath >= TEXT('a') && *fpath <= TEXT('z'))) ||
+			*(fpath + 1) != TEXT(':') || *(fpath + 2) != TEXT('\\')) {
+			ret = FALSE;
+			break;
+		}
+		for (p = fpath; *p != TEXT('\0'); p++) {
+			if (*p == TEXT('*') || *p == TEXT('?')) {
+				ret = FALSE;
+				break;
+			}
+		}
+		if (ret == TRUE && file_get_size(fpath) < 0) {
+			ret = FALSE;
+		}
+	}
+	mem_free(&fpath);
+	return ret;
+}
+
+/*
  * ConfirmURLAttach - URLで指定された添付ファイルの確認
  */
 static BOOL ConfirmURLAttach(HWND hWnd, TCHAR *Attach)
@@ -1306,10 +1358,15 @@ int Edit_MailToSet(HINSTANCE hInstance, HWND hWnd, TCHAR *mail_addr, int rebox, 
 		return FALSE;
 	}
 	// 添付ファイルが指定されている場合は確認する
-	if (tpMailItem->Attach != NULL && *tpMailItem->Attach != TEXT('\0') &&
-		ConfirmURLAttach(hWnd, tpMailItem->Attach) == FALSE) {
-		mem_free(&tpMailItem->Attach);
-		tpMailItem->Attach = NULL;
+	if (tpMailItem->Attach != NULL && *tpMailItem->Attach != TEXT('\0')) {
+		if (CheckURLAttach(tpMailItem->Attach) == FALSE) {
+			ErrorMessage(hWnd, STR_ERR_URL_ATTACH);
+			mem_free(&tpMailItem->Attach);
+			tpMailItem->Attach = NULL;
+		} else if (ConfirmURLAttach(hWnd, tpMailItem->Attach) == FALSE) {
+			mem_free(&tpMailItem->Attach);
+			tpMailItem->Attach = NULL;
+		}
 	}
 	ExistFlag = TRUE;
 	ret = Edit_InitInstance(hInstance, hWnd, rebox, tpMailItem, EDIT_NEW, 0);

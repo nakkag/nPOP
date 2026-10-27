@@ -35,6 +35,9 @@
 #define STR_ERR_INIT				TEXT("初期化に失敗しました")
 #define STR_ERR_OPEN				TEXT("ファイルオープンに失敗しました")
 #define STR_ERR_SAVEEND				TEXT("保存に失敗しました\n終了処理を続行しますか？")
+#define STR_ERR_ATTACH_ZONE			TEXT("インターネットから取得したファイルであることを示す情報 (Zone.Identifier) を書き込めなかったため、開くのを中止しました")
+#define STR_ERR_ATTACH_ZONE_SAVE	TEXT("ファイルは保存しましたが、インターネットから取得したファイルであることを示す情報 (Zone.Identifier) を書き込めませんでした。\n信頼できないファイルとして扱ってください")
+#define STR_ERR_URL_ATTACH			TEXT("指定された添付ファイルに使用できないもの (絶対パスでない、存在しない、数が多すぎるなど) が含まれているため添付しません")
 #define STR_ERR_SAVE				TEXT("保存に失敗しました")
 #define STR_ERR_ADD					TEXT("追加に失敗しました")
 #define STR_ERR_VIEW				TEXT("表示に失敗しました")
@@ -74,7 +77,7 @@
 #define STR_ERR_SOCK_TOP			TEXT("TOPに失敗しました\n\n")
 #define STR_ERR_SOCK_RETR			TEXT("RETRに失敗しました\n\n")
 #define STR_ERR_SOCK_DELE			TEXT("削除に失敗しました\n\n")
-#define STR_ERR_SOCK_NOATTACH		TEXT("添付ファイルが見つかりませんでした")
+#define STR_ERR_SOCK_NOATTACH		TEXT("添付ファイルが見つからないか、読み込めませんでした (大きすぎるファイルは添付できません)")
 #define STR_ERR_SOCK_BADFROM		TEXT("送信元メールアドレスが正しく設定されていません")
 #define STR_ERR_SOCK_HELO			TEXT("HELOに失敗しました\n")\
 									TEXT("送信元メールアドレスが正しく設定されているか確認してください\n\n")
@@ -108,6 +111,10 @@
 #define STR_Q_SENDMAIL				TEXT("送信してもよろしいですか？")
 #define STR_Q_ATTACH				TEXT("添付ファイルにウィルスなどが含まれている場合、\n")\
 									TEXT("コンピュータに被害を及ぼす可能性があります。\n\n")\
+									TEXT("実行してよろしいですか？")
+
+#define STR_Q_ATTACH_DANGER			TEXT("このファイルは、開くとプログラムやスクリプトが実行される可能性がある種類です。\n")\
+									TEXT("送信者と内容を信頼できる場合以外は開かないでください。\n\n")\
 									TEXT("実行してよろしいですか？")
 
 #define STR_Q_URL_ATTACH			TEXT("次のファイルを添付したメールを作成します。\n")\

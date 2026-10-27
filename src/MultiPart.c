@@ -514,7 +514,7 @@ int multipart_create(TCHAR *Filename, char *ContentType, char *Encoding, char **
 
 		// ƒtƒ@ƒCƒ‹‚ğ“Ç‚İ‚Ş
 		FileSize = file_get_size(fpath);
-		if (FileSize < 0 || (cBuf = file_read(fpath, FileSize)) == NULL) {
+		if (FileSize < 0 || FileSize > ATTACH_MAX_SIZE || (cBuf = file_read(fpath, FileSize)) == NULL) {
 			mem_free(&Boundary);
 			mem_free(&ret);
 			mem_free(&fpath);
