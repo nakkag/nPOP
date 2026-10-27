@@ -41,7 +41,6 @@ held on a server.
 
 ・Ver 1.2.7 -> Ver 1.2.8
     ・Security fixes
-    ・Added safety confirmations and errors when opening attachments, when attachments are given through mailto:, and when sending to a server that does not offer encryption or authentication
     ・Fixed long passwords being lost when saved
 
 ・Ver 1.2.6 -> Ver 1.2.7
