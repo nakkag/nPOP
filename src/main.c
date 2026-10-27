@@ -677,6 +677,7 @@ static void FreeAllMailBox(void)
 		mailbox_free((MailBox + i));
 	}
 	mem_free(&MailBox);
+	MailBoxCnt = 0;
 }
 
 /*
@@ -2025,6 +2026,7 @@ static void NewMail_Massage(HWND hWnd, int cnt)
 static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static BOOL save_flag = FALSE;
+	static BOOL init_done = FALSE;		// WM_CREATE の初期化が完了したか
 	int i;
 
 	switch (msg) {
@@ -2033,6 +2035,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		SwitchCursor(FALSE);
 
 		save_flag = TRUE;
+		init_done = FALSE;
 		// メールボックスの初期化
 		if (mailbox_init() == FALSE) {
 			SwitchCursor(TRUE);
@@ -2088,10 +2091,16 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		if (first_start == TRUE) {
 			ShowWindow(hWnd, SW_SHOW);
 			SetMailBoxOption(hWnd);
+			if (MailBox == NULL) {
+				// アカウント設定の表示中にウィンドウが閉じられ解放済み
+				break;
+			}
 			ini_save_setting(hWnd, FALSE);
+			init_done = TRUE;
 			break;
 		}
-		
+		init_done = TRUE;
+
 		// 起動時チェックの開始
 		if (op.StartCheck == 1) {
 			SendMessage(hWnd, WM_COMMAND, ID_MENUITEM_ALLCHECK, 0);
@@ -2163,6 +2172,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		break;
 
 	case WM_QUERYENDSESSION:
+		if (init_done == FALSE) {
+			return TRUE;
+		}
 		if (SaveWindow(hWnd) == FALSE) {
 			return FALSE;
 		}
@@ -2170,10 +2182,16 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		return TRUE;
 
 	case WM_ENDSESSION:
-		EndWindow(hWnd);
+		if (init_done == TRUE) {
+			EndWindow(hWnd);
+		}
 		return 0;
 
 	case WM_CLOSE:
+		if (init_done == FALSE) {
+			// 初期化中 (エラー表示やアカウント設定の表示中) は閉じない
+			break;
+		}
 		if (op.ShowTrayIcon == 1 && op.CloseHide == 1) {
 			ShowWindow(hWnd, SW_HIDE);
 			FocusWnd = hWnd;
@@ -3030,6 +3048,12 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 					// メモリエラー / 受信データ異常
 					ErrorSocketEnd(hWnd, RecvBox);
 					SocketErrorMessage(hWnd, (rret == SELECT_MEM_ERROR) ? STR_ERR_MEMALLOC : STR_ERR_SOCK_SENDRECV, RecvBox);
+					break;
+				}
+				if (rret == SELECT_SOC_CLOSE && command_status != POP_QUIT) {
+					// 受信不能 (切断や SSL の復号失敗) のままタイムアウトまで待たない
+					ErrorSocketEnd(hWnd, RecvBox);
+					SocketErrorMessage(hWnd, STR_ERR_SOCK_DISCONNECT, RecvBox);
 					break;
 				}
 			}

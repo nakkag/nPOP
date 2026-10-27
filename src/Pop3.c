@@ -126,6 +126,9 @@ static BOOL mail_buf_init(int size)
 		mail_buf = (char *)mem_alloc(mail_buf_size);
 	}
 	mail_buf_len = 0;
+	if (mail_buf != NULL) {
+		*mail_buf = '\0';
+	}
 	return ((mail_buf == NULL) ? FALSE : TRUE);
 }
 
@@ -376,7 +379,7 @@ static int check_last_mail(HWND hWnd, SOCKET soc, BOOL chek_flag, TCHAR *ErrStr,
 			SetSocStatusTextT(hWnd, TEXT(CMD_UIDL)TEXT("\r\n"));
 			if (send_buf(soc, CMD_UIDL"\r\n") == -1) {
 				lstrcpy(ErrStr, STR_ERR_SOCK_SEND);
-				return FALSE;
+				return POP_ERR;
 			}
 			return POP_UIDL_ALL;
 		}
@@ -972,10 +975,14 @@ static int list_proc_uidl_set(HWND hWnd, SOCKET soc, char *buf, int buflen, TCHA
 	}
 	// レスポンスの解析
 	if (check_response(buf) == TRUE) {
-		uidl_item->UIDL = alloc_char_to_tchar(skip_response(buf));
+		// 応答待ちの間に一覧から削除されたアイテムには書き込まない
+		if (uidl_item != NULL && item_is_mailbox(tpMailBox, uidl_item) == TRUE) {
+			uidl_item->UIDL = alloc_char_to_tchar(skip_response(buf));
+		}
 	} else {
 		disable_uidl = TRUE;
 	}
+	uidl_item = NULL;
 	// 次のメールを取得
 	list_get_no++;
 	if (list_get_no > tpMailBox->MailCnt) {
@@ -1343,6 +1350,11 @@ static int exec_proc_retr(HWND hWnd, SOCKET soc, char *buf, int buflen, TCHAR *E
 
 	// 本文を取得
 	item_mail_to_item(tpMailItem, mail_buf, -1, TRUE);
+	if (tpMailItem->Status == ICON_DOWN) {
+		// 本文を保持できなかった場合は受信マークが残り同じメールを要求し続けるため中断する
+		lstrcpy(ErrStr, STR_ERR_MEMALLOC);
+		return POP_ERR;
+	}
 	tpMailItem->Download = TRUE;
 	if (hViewWnd != NULL) {
 		SendMessage(hViewWnd, WM_CHANGE_BODY, 0, (LPARAM)tpMailItem);

@@ -169,6 +169,7 @@ int recv_proc(HWND hWnd, SOCKET soc)
 		return SELECT_MEM_ERROR;
 	}
 	// éÛêM
+	WSASetLastError(0);
 	if (ssl == NULL) {
 		buf_len = recv(soc, recv_buf, RECV_SIZE, 0);
 	} else {

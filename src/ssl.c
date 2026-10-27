@@ -694,7 +694,12 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 		Message.pBuffers = Buffers;
 		scRet = DecryptMessage(&(_ssl_info->hContext), &Message, 0, NULL);
 		if (scRet == SEC_I_CONTEXT_EXPIRED) {
+			// close_notify を受信: 同じ呼び出しで復号済みのデータは呼び出し側へ渡す
 			mem_free(&pbIoBuffer);
+			if (length > 0) {
+				return length;
+			}
+			WSASetLastError(WSAECONNABORTED);
 			return -1;
 		}
 		if (scRet == SEC_E_INCOMPLETE_MESSAGE) {
@@ -708,6 +713,7 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 		}
 		if (scRet != SEC_E_OK && scRet != SEC_I_RENEGOTIATE) {
 			mem_free(&pbIoBuffer);
+			WSASetLastError(WSAECONNABORTED);
 			return -1;
 		}
 		pDataBuffer = NULL;
@@ -750,12 +756,14 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 			scRet = ssl_handshake_loop(Socket, _ssl_info, FALSE, &ExtraBuffer);
 			if (scRet != SEC_E_OK) {
 				mem_free(&pbIoBuffer);
+				WSASetLastError(WSAECONNABORTED);
 				return -1;
 			}
 			if (_ssl_info->verify && ssl_verify_certificate(_ssl_info) != 0) {
 				// 再ネゴシエーションで提示された証明書も検証する
 				mem_free(&(ExtraBuffer.pvBuffer));
 				mem_free(&pbIoBuffer);
+				WSASetLastError(WSAECONNABORTED);
 				return -1;
 			}
 			if (ExtraBuffer.pvBuffer) {
