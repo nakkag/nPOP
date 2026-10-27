@@ -57,7 +57,6 @@
 #define ATTACH_MAX_SIZE			(512 * 1024 * 1024)	// 添付できるファイルの最大サイズ
 #define URL_ATTACH_MAX			10					// mailto: で指定できる添付ファイルの数
 #define MAX_MAIL_COUNT			1000000				// サーバから受け取るメール数の上限
-#define RECV_LINE_MAX			(1024 * 1024)		// 受信する1行の最大バイト数
 #define COPYDATA_MAX			(sizeof(TCHAR) * 32768)	// WM_COPYDATA で受け付ける最大サイズ
 
 #define SICONSIZE				Scale(16)			// 小さいアイコンのサイズ

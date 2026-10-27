@@ -161,6 +161,7 @@ int recv_proc(HWND hWnd, SOCKET soc)
 	char *p;
 	int buf_len;
 	int len;
+	int new_size;
 	SSL *ssl_org;
 
 	// 受信用バッファの確保
@@ -184,12 +185,17 @@ int recv_proc(HWND hWnd, SOCKET soc)
 	buf = recv_buf;
 	// 未処理文字列と受信文字列を結合
 	if (old_buf_len > 0 && old_buf != NULL) {
-		if (old_buf_len + buf_len > RECV_LINE_MAX) {
-			// 改行の無い行が長すぎる
+		if (old_buf_len > 0x7FFFFFFF - buf_len) {
+			// 改行の無い行が int に収まらない
 			return SELECT_SOC_ERROR;
 		}
 		if (old_buf_size < old_buf_len + buf_len) {
-			old_buf_size += buf_len;
+			// 再確保 (コピー回数を抑えるため倍率で拡張する)
+			new_size = old_buf_len + buf_len;
+			if (old_buf_size < 0x7FFFFFFF - old_buf_size / 2 && new_size < old_buf_size + old_buf_size / 2) {
+				new_size = old_buf_size + old_buf_size / 2;
+			}
+			old_buf_size = new_size;
 			buf = (char *)mem_alloc(old_buf_size);
 			if (buf == NULL) {
 				return SELECT_MEM_ERROR;
