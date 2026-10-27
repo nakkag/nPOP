@@ -3416,8 +3416,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return 0;
 }
 
-#ifndef UNICODE
-#ifndef _DEBUG
+// CRT を使わない独自のスタートアップ (NPOP_NO_CRT_STARTUP 定義時のみ)
+// VS2015 以降の CRT は標準のスタートアップ経由で vcruntime / ucrt がリンクされるため
+// 通常は CRT 標準のスタートアップを使用する
+#if !defined(UNICODE) && !defined(_DEBUG) && defined(NPOP_NO_CRT_STARTUP)
 void __cdecl WinMainCRTStartup(void)
 {
     STARTUPINFO stinfo;
@@ -3444,6 +3446,5 @@ void __cdecl WinMainCRTStartup(void)
 	// プロセスの終了
 	ExitProcess(ret);
 }
-#endif
 #endif
 /* End of source */
