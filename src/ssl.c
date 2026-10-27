@@ -595,8 +595,10 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 	int i;
 	DWORD cbIoBufferLength;
 	PBYTE pbIoBuffer;
+#ifndef WSAASYNC
 	struct timeval waittime;
 	fd_set rdps;
+#endif
 
 	scRet = QueryContextAttributes(&(_ssl_info->hContext), SECPKG_ATTR_STREAM_SIZES, &Sizes);
 	if (scRet != SEC_E_OK) {
@@ -630,6 +632,14 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 			cbData = 0;
 			if (cbIoBuffer > 0) {
 				if (cbIoBuffer < cbIoBufferLength) {
+#ifdef WSAASYNC
+					// FD_READ の通知は recv を呼ぶまで再有効化されないため、
+					// select で可読性を確認せずに非ブロッキングの recv を呼ぶ
+					cbData = recv(Socket, pbIoBuffer + cbIoBuffer, cbIoBufferLength - cbIoBuffer, 0);
+					if (cbData == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK) {
+						cbData = 0;
+					}
+#else
 					waittime.tv_sec = 0;
 					waittime.tv_usec = 0;
 					FD_ZERO(&rdps);
@@ -637,6 +647,7 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 					if (select(FD_SETSIZE, &rdps, (fd_set *)0, (fd_set *)0, &waittime) > 0) {
 						cbData = recv(Socket, pbIoBuffer + cbIoBuffer, cbIoBufferLength - cbIoBuffer, 0);
 					}
+#endif
 				}
 			}
 			else {
