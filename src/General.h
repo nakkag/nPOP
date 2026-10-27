@@ -91,6 +91,7 @@
 #define WM_ENDDIALOG			(WM_APP + 10)		// メール到着メッセージ終了
 
 #define WM_CHANGE_MARK			(WM_APP + 11)
+#define WM_CHANGE_BODY			(WM_APP + 12)		// 本文の置き換え
 
 #define EDIT_OPEN				0					// 送信メール編集のタイプ
 #define EDIT_NEW				1

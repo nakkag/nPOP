@@ -148,6 +148,10 @@ char *charset_encode(WCHAR *charset, WCHAR *buf, UINT len)
 		return NULL;
 	}
 	ret = (char *)mem_alloc(sizeof(char) * (ret_len + 1));
+	if (ret == NULL) {
+		pMultiLanguage->Release();
+		return NULL;
+	}
 	if (pMultiLanguage->ConvertStringFromUnicode(&mode, encoding, buf, &len, ret, &ret_len) != S_OK) {
 		mem_free((void **)&ret);
 		pMultiLanguage->Release();
@@ -185,6 +189,10 @@ WCHAR *charset_decode(WCHAR *charset, char *buf, UINT len)
 		return NULL;
 	}
 	wret = (WCHAR *)mem_alloc(sizeof(WCHAR) * (ret_len + 1));
+	if (wret == NULL) {
+		pMultiLanguage->Release();
+		return NULL;
+	}
 	if (pMultiLanguage->ConvertStringToUnicode(&mode, encoding, buf, &len, wret, &ret_len) != S_OK) {
 		mem_free((void **)&wret);
 		pMultiLanguage->Release();

@@ -1466,8 +1466,8 @@ static BOOL DeleteAttachFile(HWND hWnd, MAILITEM *tpMailItem)
 
 	// テキストのパートを検索
 	for (i = 0; i < cnt; i++) {
-		if ((*tpPart + i)->ContentType == NULL ||
-			str_cmp_ni((*tpPart + i)->ContentType, "text", tstrlen("text")) == 0) {
+		if ((*(tpPart + i))->ContentType == NULL ||
+			str_cmp_ni((*(tpPart + i))->ContentType, "text", tstrlen("text")) == 0) {
 			TextIndex = i;
 			break;
 		}
@@ -1476,14 +1476,14 @@ static BOOL DeleteAttachFile(HWND hWnd, MAILITEM *tpMailItem)
 		multipart_free(&tpPart, cnt);
 		return FALSE;
 	}
-	if ((*tpPart + TextIndex)->ePos == NULL) {
-		mBody = alloc_copy((*tpPart + TextIndex)->sPos);
+	if ((*(tpPart + TextIndex))->ePos == NULL) {
+		mBody = alloc_copy((*(tpPart + TextIndex))->sPos);
 		if (mBody == NULL) {
 			multipart_free(&tpPart, cnt);
 			return FALSE;
 		}
 	} else {
-		i = (*tpPart + TextIndex)->ePos - (*tpPart + TextIndex)->sPos;
+		i = (*(tpPart + TextIndex))->ePos - (*(tpPart + TextIndex))->sPos;
 		mBody = (char *)mem_alloc(sizeof(char) * (i + 1));
 		if (mBody == NULL) {
 			multipart_free(&tpPart, cnt);
@@ -1492,7 +1492,7 @@ static BOOL DeleteAttachFile(HWND hWnd, MAILITEM *tpMailItem)
 		if (i <= 1) {
 			*mBody = '\0';
 		} else {
-			str_cpy_n(mBody, (*tpPart + TextIndex)->sPos, i - 1);
+			str_cpy_n(mBody, (*(tpPart + TextIndex))->sPos, i - 1);
 		}
 	}
 
@@ -1500,9 +1500,9 @@ static BOOL DeleteAttachFile(HWND hWnd, MAILITEM *tpMailItem)
 	mem_free(&tpMailItem->Body);
 	tpMailItem->Body = mBody;
 	mem_free(&tpMailItem->Encoding);
-	tpMailItem->Encoding = alloc_char_to_tchar((*tpPart + TextIndex)->Encoding);
+	tpMailItem->Encoding = alloc_char_to_tchar((*(tpPart + TextIndex))->Encoding);
 	mem_free(&tpMailItem->ContentType);
-	tpMailItem->ContentType = alloc_char_to_tchar((*tpPart + TextIndex)->ContentType);
+	tpMailItem->ContentType = alloc_char_to_tchar((*(tpPart + TextIndex))->ContentType);
 	mem_free(&tpMailItem->Attach);
 	tpMailItem->Attach = alloc_copy_t(TEXT("_"));
 
@@ -1714,6 +1714,19 @@ static LRESULT CALLBACK ViewProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
 			break;
 		}
 		GetMarkStatus(hWnd, (MAILITEM *)GetWindowLong(hWnd, GWL_USERDATA));
+		break;
+
+	case WM_CHANGE_BODY:
+		if ((MAILITEM *)lParam != (MAILITEM *)GetWindowLong(hWnd, GWL_USERDATA)) {
+			break;
+		}
+		// 本文が置き換わったため解析済みのパートを破棄する
+		multipart_free(&tpMultiPart, MultiPartCnt);
+		tpMultiPart = NULL;
+		MultiPartCnt = 0;
+		if (vSelBox == SelBox && item_is_mailbox(MailBox + vSelBox, (MAILITEM *)lParam) == TRUE) {
+			ModfyWindow(hWnd, (MAILITEM *)lParam, FALSE);
+		}
 		break;
 
 	case WM_SIZE:
@@ -1962,7 +1975,7 @@ static LRESULT CALLBACK ViewProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPar
 		default:
 			{
 				int id = GET_WM_COMMAND_ID(wParam, lParam);
-				if (id >= ID_ATTACH && id <= ID_ATTACH + 100) {
+				if (id >= ID_ATTACH && id <= ID_ATTACH + 100 && id - ID_ATTACH < MultiPartCnt) {
 					if (item_is_mailbox(MailBox + vSelBox,
 						(MAILITEM *)GetWindowLong(hWnd, GWL_USERDATA)) == FALSE) {
 						ErrorMessage(hWnd, STR_ERR_NOMAIL);

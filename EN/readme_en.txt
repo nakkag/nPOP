@@ -45,6 +45,8 @@ held on a server.
         ・Stricter validation of attachment save paths and file names
         ・SMTP sending no longer continues in plain text when STARTTLS is unavailable
         ・The attach and mailbox parameters of mailto: are now accepted only from the command line
+        ・On an unencrypted connection, SMTP authentication that sends the password as plain text (LOGIN/PLAIN) is no longer selected automatically
+        ・The APOP timestamp is now validated
     ・Fixed long passwords being lost when saved
 
 ・Ver 1.2.6 -> Ver 1.2.7

@@ -269,6 +269,12 @@ BOOL GetHeaderStringT(TCHAR *buf, TCHAR *ret, BOOL CrLfFlag)
 				continue;
 			}
 		}
+		if (*p == TEXT('\r') || *p == TEXT('\n')) {
+			// 折り返し以外の改行は空白にする
+			*(r++) = TEXT(' ');
+			p++;
+			continue;
+		}
 		*(r++) = *(p++);
 	}
 	*r = TEXT('\0');
@@ -298,6 +304,12 @@ BOOL GetHeaderString(char *buf, char *ret, BOOL CrLfFlag)
 				p++;
 				continue;
 			}
+		}
+		if (*p == '\r' || *p == '\n') {
+			// 折り返し以外の改行は空白にする
+			*(r++) = ' ';
+			p++;
+			continue;
 		}
 		*(r++) = *(p++);
 	}

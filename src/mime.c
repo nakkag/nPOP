@@ -626,6 +626,9 @@ int MIME_decode(char *buf, TCHAR *ret)
 	BOOL enc_flag = FALSE;
 	BOOL enc_err = FALSE;
 	int ret_len = 0;
+#ifdef UNICODE
+	int wlen;
+#endif
 
 	p = buf;
 	r = ret;
@@ -649,11 +652,11 @@ int MIME_decode(char *buf, TCHAR *ret)
 			if (ret != NULL) {
 				// コピー
 #ifdef UNICODE
-				MultiByteToWideChar(CP_ACP, 0, non_enc_pt, (p - non_enc_pt), r, (p - non_enc_pt));
+				r += MultiByteToWideChar(CP_ACP, 0, non_enc_pt, (p - non_enc_pt), r, (p - non_enc_pt));
 #else
 				str_cpy_n_t(r, non_enc_pt, (p - non_enc_pt) + 1);
-#endif
 				r += p - non_enc_pt;
+#endif
 			}
 			ret_len += p - non_enc_pt;
 			non_enc_pt = p;
@@ -731,8 +734,8 @@ int MIME_decode(char *buf, TCHAR *ret)
 			continue;
 		}
 #ifdef UNICODE
-		MultiByteToWideChar(CP_ACP, 0, charset_st, (charset_en - charset_st), charset, (charset_en - charset_st));
-		*(charset + (charset_en - charset_st)) = TEXT('\0');
+		wlen = MultiByteToWideChar(CP_ACP, 0, charset_st, (charset_en - charset_st), charset, (charset_en - charset_st));
+		*(charset + wlen) = TEXT('\0');
 #else
 		str_cpy_n_t(charset, charset_st, (charset_en - charset_st) + 1);
 #endif
@@ -778,11 +781,11 @@ int MIME_decode(char *buf, TCHAR *ret)
 		if (ret != NULL) {
 			// コピー
 #ifdef UNICODE
-			MultiByteToWideChar(CP_ACP, 0, non_enc_pt, (p - non_enc_pt), r, (p - non_enc_pt));
+			r += MultiByteToWideChar(CP_ACP, 0, non_enc_pt, (p - non_enc_pt), r, (p - non_enc_pt));
 #else
 			str_cpy_n_t(r, non_enc_pt, (p - non_enc_pt) + 1);
-#endif
 			r += p - non_enc_pt;
+#endif
 		}
 		ret_len += p - non_enc_pt;
 	}

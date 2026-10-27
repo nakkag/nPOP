@@ -95,6 +95,10 @@ SOCKET connect_server(HWND hWnd, unsigned long ip_addr, unsigned short port, TCH
 
 	if (use_ssl == 1 && _ssl_type != 4) {
 		ssl = ssl_init();
+		if (ssl == NULL) {
+			lstrcpy(ErrStr, STR_ERR_SOCK_SSL_INIT);
+			return -1;
+		}
 	}
 	ssl_server = server;
 	ssl_type = _ssl_type;

@@ -436,6 +436,7 @@ static int item_get_multi_content(char *buf, char *header, char **ret)
 static int item_get_mime_content(char *buf, char *header, TCHAR **ret, BOOL multi_flag)
 {
 	char *Content;
+	TCHAR *r;
 	int len;
 
 	*ret = NULL;
@@ -446,6 +447,12 @@ static int item_get_mime_content(char *buf, char *header, TCHAR **ret, BOOL mult
 		*ret = (TCHAR *)mem_alloc(sizeof(TCHAR) * (len + 1));
 		if (*ret != NULL) {
 			MIME_decode(Content, *ret);
+			// デコード結果に含まれる改行は空白にする
+			for (r = *ret; *r != TEXT('\0'); r++) {
+				if (*r == TEXT('\r') || *r == TEXT('\n')) {
+					*r = TEXT(' ');
+				}
+			}
 		}
 		mem_free(&Content);
 	}
@@ -632,22 +639,94 @@ int item_get_next_send_mark_mailbox(MAILBOX *tpMailBox, int Index, int MailBoxIn
 }
 
 /*
+ * item_is_text_encoded - テキストが base64 または quoted-printable でエンコードされているか
+ */
+static BOOL item_is_text_encoded(MAILITEM *tpMailItem)
+{
+	if (tpMailItem->Encoding == NULL || tpMailItem->ContentType == NULL ||
+		str_cmp_ni_t(tpMailItem->ContentType, TEXT("text"), lstrlen(TEXT("text"))) != 0) {
+		return FALSE;
+	}
+	return (str_cmp_ni_t(tpMailItem->Encoding, TEXT(ENCODE_BASE64), lstrlen(TEXT(ENCODE_BASE64))) == 0 ||
+		str_cmp_ni_t(tpMailItem->Encoding, TEXT(ENCODE_Q_PRINT), lstrlen(TEXT(ENCODE_Q_PRINT))) == 0);
+}
+
+/*
+ * item_dot_del - 行頭のピリオドを1つ削除する
+ */
+static void item_dot_del(char *buf)
+{
+	char *p, *r;
+	char prev = '\n';
+
+	for (p = r = buf; *p != '\0'; p++) {
+		if (*p == '.' && prev == '\n') {
+			prev = *p;
+			continue;
+		}
+		prev = *p;
+		*(r++) = *p;
+	}
+	*r = '\0';
+}
+
+/*
+ * item_dot_set - 行頭のピリオドを二重にする (ret が NULL の場合はサイズのみ取得)
+ */
+static int item_dot_set(char *buf, char *ret)
+{
+	char *p;
+	char prev = '\n';
+	int len = 0;
+
+	for (p = buf; *p != '\0'; p++) {
+		if (*p == '.' && prev == '\n') {
+			if (ret != NULL) {
+				*(ret + len) = '.';
+			}
+			len++;
+		}
+		if (ret != NULL) {
+			*(ret + len) = *p;
+		}
+		prev = *p;
+		len++;
+	}
+	if (ret != NULL) {
+		*(ret + len) = '\0';
+	}
+	return len;
+}
+
+/*
  * item_set_body - アイテムに本文を設定
  */
 static void item_set_body(MAILITEM *tpMailItem, char *buf, BOOL download)
 {
-	char *p, *r;
+	char *p, *r, *tmp;
 	int len;
 	int header_size;
+	BOOL dot;
 
 	p = GetBodyPointa(buf);
 	if (p != NULL && *p != '\0') {
-		// デコード
-		r = MIME_body_decode_transfer(tpMailItem, p);
+		// デコードする本文は行頭のピリオドを戻してからデコードし、保存用に付け直す
+		dot = item_is_text_encoded(tpMailItem);
+		if (dot == TRUE) {
+			tmp = alloc_copy(p);
+			if (tmp == NULL) {
+				return;
+			}
+			item_dot_del(tmp);
+			r = MIME_body_decode_transfer(tpMailItem, tmp);
+			mem_free(&tmp);
+		} else {
+			r = MIME_body_decode_transfer(tpMailItem, p);
+		}
 		if (r == NULL) {
 			return;
 		}
-		len = tstrlen(r);
+		len = (dot == TRUE) ? item_dot_set(r, NULL) : tstrlen(r);
 
 		// ヘッダを表示する設定の場合
 		header_size = (op.ShowHeader == 1 || KeyShowHeader == TRUE) ? (p - buf) : 0;
@@ -660,7 +739,11 @@ static void item_set_body(MAILITEM *tpMailItem, char *buf, BOOL download)
 				str_cpy_n(tpMailItem->Body, buf, header_size + 1);
 			}
 			// 本文
-			tstrcpy(tpMailItem->Body + header_size, r);
+			if (dot == TRUE) {
+				item_dot_set(r, tpMailItem->Body + header_size);
+			} else {
+				tstrcpy(tpMailItem->Body + header_size, r);
+			}
 		}
 		mem_free(&r);
 
@@ -1063,32 +1146,50 @@ static int item_save_header_size(TCHAR *header, TCHAR *buf)
 }
 
 /*
+ * item_save_header_clean - 保存するヘッダの値に含まれる改行を空白にする
+ */
+static void item_save_header_clean(TCHAR *buf)
+{
+	for (; *buf != TEXT('\0'); buf++) {
+		if (*buf == TEXT('\r') || *buf == TEXT('\n')) {
+			*buf = TEXT(' ');
+		}
+	}
+}
+
+/*
  * item_save_header - ヘッダを保存する文字列の作成
  */
 static char *item_save_header(TCHAR *header, TCHAR *buf, char *ret)
 {
 #ifdef UNICODE
-	TCHAR *wret;
+	TCHAR *wret, *r;
 	int len;
 
 	if (buf == NULL) {
 		return ret;
 	}
 	wret = mem_alloc(sizeof(TCHAR) * (lstrlen(header) + 1 + lstrlen(buf) + 2 + 1));
-	if (buf == NULL) {
+	if (wret == NULL) {
 		return ret;
 	}
-	str_join_t(wret, header, TEXT(" "), buf, TEXT("\r\n"), (TCHAR *)-1);
+	r = str_join_t(wret, header, TEXT(" "), buf, (TCHAR *)-1);
+	item_save_header_clean(wret + lstrlen(header) + 1);
+	str_cpy_t(r, TEXT("\r\n"));
 	len = tchar_to_utf8_size(wret);
 	tchar_to_utf8(wret, ret, len);
 	mem_free(&wret);
 	*(ret + len) = '\0';
 	return (ret + len - 1);
 #else
+	TCHAR *r;
+
 	if (buf == NULL) {
 		return ret;
 	}
-	return str_join_t(ret, header, TEXT(" "), buf, TEXT("\r\n"), (TCHAR *)-1);
+	r = str_join_t(ret, header, TEXT(" "), buf, (TCHAR *)-1);
+	item_save_header_clean(ret + lstrlen(header) + 1);
+	return str_cpy_t(r, TEXT("\r\n"));
 #endif
 }
 

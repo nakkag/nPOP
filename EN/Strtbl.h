@@ -92,6 +92,7 @@
 #define STR_ERR_SOCK_DATA			TEXT("DATA failed\n\n")
 #define STR_ERR_SOCK_MAILSEND		TEXT("Mail not sent\n\n")
 #define STR_ERR_SOCK_NOSTARTTLS		TEXT("Server does not support STARTTLS; connection not encrypted")
+#define STR_ERR_SOCK_AUTHPLAIN		TEXT("The connection is not encrypted, so LOGIN/PLAIN authentication (password sent as plain text) is not selected automatically.\nUse SSL/TLS or select the SMTP authentication method.")
 #define STR_ERR_SOCK_SSL_INIT		TEXT("SSL initialization failed")
 #define STR_ERR_SOCK_SSL_VERIFY		TEXT("Server certificate verification failed")
 

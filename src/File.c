@@ -84,7 +84,7 @@ BOOL log_save(TCHAR *fpath, TCHAR *fname, TCHAR *buf)
 		CloseHandle(hFile);
 		return FALSE;
 	}
-	if (*(buf + lstrlen(buf) - 1) != TEXT('\n')) {
+	if (*buf == TEXT('\0') || *(buf + lstrlen(buf) - 1) != TEXT('\n')) {
 		if (WriteFile(hFile, "\r\n", 2, &ret, NULL) == FALSE) {
 			CloseHandle(hFile);
 			return FALSE;
@@ -226,6 +226,13 @@ void filename_conv(TCHAR *buf)
 			if ((unsigned)*p < 0x20 || *p == 0x7F) {
 				*p = TEXT('_');
 			}
+#ifdef UNICODE
+			// •\Ž¦•ûŒü‚Ì§Œä•¶Žš (Šg’£Žq‚Ì‹U‘•‚ÉŽg‚í‚ê‚é)
+			if (*p == 0x200E || *p == 0x200F ||
+				(*p >= 0x202A && *p <= 0x202E) || (*p >= 0x2066 && *p <= 0x2069)) {
+				*p = TEXT('_');
+			}
+#endif
 			break;
 		}
 		p++;

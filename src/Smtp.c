@@ -378,11 +378,50 @@ static TCHAR *auth_get_password(MAILBOX *tpMailBox)
 }
 
 /*
+ * header_clean_t - ヘッダの値に含まれる折り返し以外の改行を空白にする
+ */
+static void header_clean_t(TCHAR *buf)
+{
+	TCHAR *p;
+
+	for (p = buf; *p != TEXT('\0'); p++) {
+		if (*p == TEXT('\r') && *(p + 1) == TEXT('\n') &&
+			(*(p + 2) == TEXT(' ') || *(p + 2) == TEXT('\t'))) {
+			p++;
+			continue;
+		}
+		if (*p == TEXT('\r') || *p == TEXT('\n')) {
+			*p = TEXT(' ');
+		}
+	}
+}
+
+/*
+ * header_clean - ヘッダの値に含まれる折り返し以外の改行を空白にする
+ */
+#ifdef UNICODE
+static void header_clean(char *buf)
+{
+	char *p;
+
+	for (p = buf; *p != '\0'; p++) {
+		if (*p == '\r' && *(p + 1) == '\n' && (*(p + 2) == ' ' || *(p + 2) == '\t')) {
+			p++;
+			continue;
+		}
+		if (*p == '\r' || *p == '\n') {
+			*p = ' ';
+		}
+	}
+}
+#endif
+
+/*
  * send_address - メールアドレスを送信する
  */
 static BOOL send_address(HWND hWnd, SOCKET soc, TCHAR *command, TCHAR *address, TCHAR *ErrStr)
 {
-	TCHAR *wbuf;
+	TCHAR *wbuf, *p;
 
 	wbuf = (TCHAR *)mem_alloc(sizeof(TCHAR) * (lstrlen(TEXT(":<>\r\n")) + lstrlen(command) + lstrlen(address) + 1));
 	if (wbuf == NULL) {
@@ -390,7 +429,14 @@ static BOOL send_address(HWND hWnd, SOCKET soc, TCHAR *command, TCHAR *address, 
 		return FALSE;
 	}
 	// command:<address>\r\n
-	str_join_t(wbuf, command, TEXT(":<"), address, TEXT(">\r\n"), (TCHAR *)-1);
+	str_join_t(wbuf, command, TEXT(":<"), address, (TCHAR *)-1);
+	for (p = wbuf + lstrlen(command) + 2; *p != TEXT('\0'); p++) {
+		// アドレスに含まれる改行は空白にする
+		if (*p == TEXT('\r') || *p == TEXT('\n')) {
+			*p = TEXT(' ');
+		}
+	}
+	str_cpy_t(p, TEXT(">\r\n"));
 
 	SetSocStatusTextT(hWnd, wbuf);
 	if (send_buf_t(soc, wbuf) == -1) {
@@ -431,7 +477,7 @@ static TCHAR *send_rcpt_to(HWND hWnd, SOCKET soc, TCHAR *address, TCHAR *ErrStr)
  */
 static BOOL send_header_t(SOCKET soc, TCHAR *header, TCHAR *content, TCHAR *ErrStr)
 {
-	TCHAR *buf;
+	TCHAR *buf, *p;
 
 	if (content == NULL || *content == TEXT('\0')) {
 		return TRUE;
@@ -441,7 +487,9 @@ static BOOL send_header_t(SOCKET soc, TCHAR *header, TCHAR *content, TCHAR *ErrS
 		lstrcpy(ErrStr, STR_ERR_MEMALLOC);
 		return FALSE;
 	}
-	str_join_t(buf, header, TEXT(" "), content, TEXT("\r\n"), (TCHAR *)-1);
+	p = str_join_t(buf, header, TEXT(" "), content, (TCHAR *)-1);
+	header_clean_t(buf + lstrlen(header) + 1);
+	str_cpy_t(p, TEXT("\r\n"));
 	if (send_buf_t(soc, buf) == -1) {
 		mem_free(&buf);
 		lstrcpy(ErrStr, STR_ERR_SOCK_SEND);
@@ -457,7 +505,7 @@ static BOOL send_header_t(SOCKET soc, TCHAR *header, TCHAR *content, TCHAR *ErrS
 #ifdef UNICODE
 static BOOL send_header(SOCKET soc, char *header, char *content, TCHAR *ErrStr)
 {
-	char *buf;
+	char *buf, *p;
 
 	if (content == NULL || *content == '\0') {
 		return TRUE;
@@ -467,7 +515,9 @@ static BOOL send_header(SOCKET soc, char *header, char *content, TCHAR *ErrStr)
 		lstrcpy(ErrStr, STR_ERR_MEMALLOC);
 		return FALSE;
 	}
-	str_join(buf, header, " ", content, "\r\n", (char *)-1);
+	p = str_join(buf, header, " ", content, (char *)-1);
+	header_clean(buf + tstrlen(header) + 1);
+	str_cpy(p, "\r\n");
 	if (send_buf(soc, buf) == -1) {
 		mem_free(&buf);
 		lstrcpy(ErrStr, STR_ERR_SOCK_SEND);
@@ -736,7 +786,7 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 		if (auth_flag == TRUE && command_status == SMTP_EHLO) {
 			auth_get_type(buf, &auth_type);
 		}
-		if (command_status == SMTP_EHLO) {
+		if (command_status == SMTP_EHLO && ssl == NULL) {
 			if (check_starttls(buf) == TRUE) {
 				starttls_flag = TRUE;
 			}
@@ -774,6 +824,10 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 		// STARTTLS
 		if (command_status == SMTP_STARTTLS) {
 			ssl = ssl_init();
+			if (ssl == NULL) {
+				lstrcpy(ErrStr, STR_ERR_SOCK_SSL_INIT);
+				return FALSE;
+			}
 			if (init_ssl(hWnd, soc, ErrStr) == -1) {
 				return FALSE;
 			}
@@ -826,7 +880,7 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 			command_status = SMTP_START;
 			return send_mail_proc(hWnd, soc, NULL, ErrStr, tpMailItem, ShowFlag);
 		}
-		if (starttls_flag == TRUE && send_mail_box->SmtpSSL == 1 && send_mail_box->SmtpSSLInfo.Type == 4) {
+		if (starttls_flag == TRUE && ssl == NULL && send_mail_box->SmtpSSL == 1 && send_mail_box->SmtpSSLInfo.Type == 4) {
 			// STARTTLS
 			SetSocStatusTextT(hWnd, TEXT(CMD_STARTTLS));
 			if (send_buf(soc, CMD_STARTTLS"\r\n") == -1) {
@@ -852,6 +906,10 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 		if (send_mail_box->SmtpAuthType != 0) {
 			// 強制的にSMTP認証方式を設定
 			auth_type = send_mail_box->SmtpAuthType - 1;
+		} else if (ssl == NULL && (auth_type == AUTH_LOGIN || auth_type == AUTH_PLAIN)) {
+			// 暗号化されていない接続ではパスワードを平文で送る方式を自動で選択しない
+			lstrcpy(ErrStr, STR_ERR_SOCK_AUTHPLAIN);
+			return FALSE;
 		}
 		// SMTP認証
 		switch (auth_type) {
@@ -938,7 +996,7 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 		if (wbuf == NULL) {
 			return FALSE;
 		}
-		p = (TCHAR *)mem_calloc(sizeof(TCHAR) * (lstrlen(wbuf) * 2 + 4));
+		p = (TCHAR *)mem_calloc(sizeof(TCHAR) * (tchar_to_char_size(wbuf) * 2 + 4));
 		if (p == NULL) {
 			mem_free(&wbuf);
 			lstrcpy(ErrStr, STR_ERR_MEMALLOC);
@@ -980,7 +1038,7 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 			lstrcpy(ErrStr, STR_ERR_SOCK_NOUSERID);
 			return FALSE;
 		}
-		p = (TCHAR *)mem_calloc(sizeof(TCHAR) * (lstrlen(user) * 2 + 4));
+		p = (TCHAR *)mem_calloc(sizeof(TCHAR) * (tchar_to_char_size(user) * 2 + 4));
 		if (p == NULL) {
 			lstrcpy(ErrStr, STR_ERR_MEMALLOC);
 			return FALSE;
@@ -1019,7 +1077,7 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 			lstrcpy(ErrStr, STR_ERR_SOCK_NOPASSWORD);
 			return FALSE;
 		}
-		p = (TCHAR *)mem_calloc(sizeof(TCHAR) * (lstrlen(pass) * 2 + 4));
+		p = (TCHAR *)mem_calloc(sizeof(TCHAR) * (tchar_to_char_size(pass) * 2 + 4));
 		if (p == NULL) {
 			lstrcpy(ErrStr, STR_ERR_MEMALLOC);
 			return FALSE;

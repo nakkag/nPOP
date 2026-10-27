@@ -408,34 +408,62 @@ static int send_command_top(HWND hWnd, SOCKET soc, int Cnt, TCHAR *ErrStr, int l
 }
 
 /*
- * create_apop - APOPの文字列を生成する
+ * apop_get_timestamp - 接続時の応答から APOP のタイムスタンプを取得する (RFC 1939)
  */
-static TCHAR *create_apop(char *buf, TCHAR *ErrStr, MAILBOX *tpMailBox, TCHAR *sPass)
+static BOOL apop_get_timestamp(char *buf, char *ret)
 {
-	MD5_CTX context;
-	TCHAR *wbuf;
-	unsigned char digest[16];
 	char *hidx = NULL;
 	char *tidx = NULL;
-	char *pass;
 	char *p;
-	int len;
-	int i;
+	BOOL at = FALSE;
 
+	*ret = '\0';
 	// < から > までを抽出
-	for (hidx = NULL, p = buf; *p != '\0';p++) {
+	for (p = buf; *p != '\0'; p++) {
 		if (*p == '<') {
 			hidx = p;
 		}
 	}
 	if (hidx != NULL) {
-		for (tidx = NULL, p = hidx; *p != '\0';p++) {
+		for (p = hidx; *p != '\0'; p++) {
 			if (*p == '>') {
 				tidx = p;
 			}
 		}
 	}
-	if (hidx == NULL || tidx == NULL) {
+	if (hidx == NULL || tidx == NULL || tidx - hidx + 1 >= BUF_SIZE) {
+		return FALSE;
+	}
+	// 印字可能な ASCII 文字だけで構成され @ を含むこと
+	for (p = hidx + 1; p < tidx; p++) {
+		if ((unsigned char)*p < 0x21 || (unsigned char)*p > 0x7E) {
+			return FALSE;
+		}
+		if (*p == '@') {
+			at = TRUE;
+		}
+	}
+	if (at == FALSE) {
+		return FALSE;
+	}
+	str_cpy_n(ret, hidx, tidx - hidx + 2);
+	return TRUE;
+}
+
+/*
+ * create_apop - APOPの文字列を生成する
+ */
+static TCHAR *create_apop(char *timestamp, TCHAR *ErrStr, MAILBOX *tpMailBox, TCHAR *sPass)
+{
+	MD5_CTX context;
+	TCHAR *wbuf;
+	unsigned char digest[16];
+	char *pass;
+	char *p;
+	int len;
+	int i;
+
+	if (*timestamp == '\0') {
 		lstrcpy(ErrStr, STR_ERR_SOCK_NOAPOP);
 		return NULL;
 	}
@@ -446,14 +474,14 @@ static TCHAR *create_apop(char *buf, TCHAR *ErrStr, MAILBOX *tpMailBox, TCHAR *s
 		return NULL;
 	}
 
-	p = (char *)mem_alloc((tidx - hidx + 2) + tstrlen(pass) + 1);
+	p = (char *)mem_alloc(tstrlen(timestamp) + tstrlen(pass) + 1);
 	if (p == NULL) {
 		mem_free(&pass);
 		lstrcpy(ErrStr, STR_ERR_MEMALLOC);
 		return NULL;
 	}
 
-	str_cpy_n(p, hidx, tidx - hidx + 2);
+	tstrcpy(p, timestamp);
 	tstrcat(p, pass);
 	mem_free(&pass);
 
@@ -486,6 +514,7 @@ static int login_proc(HWND hWnd, SOCKET soc, char *buf, int buflen, TCHAR *ErrSt
 {
 	TCHAR *wbuf;
 	static TCHAR *pass;
+	static char apop_timestamp[BUF_SIZE];
 	int ret = POP_ERR;
 	BOOL PopSTARTTLS = FALSE;
 
@@ -500,6 +529,10 @@ static int login_proc(HWND hWnd, SOCKET soc, char *buf, int buflen, TCHAR *ErrSt
 			return POP_ERR;
 		}
 		ssl = ssl_init();
+		if (ssl == NULL) {
+			lstrcpy(ErrStr, STR_ERR_SOCK_SSL_INIT);
+			return POP_ERR;
+		}
 		if (init_ssl(hWnd, soc, ErrStr) == -1) {
 			return POP_ERR;
 		}
@@ -518,6 +551,10 @@ static int login_proc(HWND hWnd, SOCKET soc, char *buf, int buflen, TCHAR *ErrSt
 		if (tpMailBox->User == NULL || *tpMailBox->User == TEXT('\0')) {
 			lstrcpy(ErrStr, STR_ERR_SOCK_NOUSERID);
 			return POP_ERR;
+		}
+		if (PopSTARTTLS == FALSE) {
+			// APOP のタイムスタンプは接続時の応答から取得する
+			apop_get_timestamp(buf, apop_timestamp);
 		}
 
 		// STARTTLS
@@ -543,7 +580,7 @@ static int login_proc(HWND hWnd, SOCKET soc, char *buf, int buflen, TCHAR *ErrSt
 		}
 		// APOPによる認証
 		if (tpMailBox->APOP == 1) {
-			wbuf = create_apop(buf, ErrStr, tpMailBox, pass);
+			wbuf = create_apop(apop_timestamp, ErrStr, tpMailBox, pass);
 			if (wbuf == NULL) {
 				return POP_ERR;
 			}
@@ -1284,6 +1321,9 @@ static int exec_proc_retr(HWND hWnd, SOCKET soc, char *buf, int buflen, TCHAR *E
 	// 本文を取得
 	item_mail_to_item(tpMailItem, mail_buf, -1, TRUE);
 	tpMailItem->Download = TRUE;
+	if (hViewWnd != NULL) {
+		SendMessage(hViewWnd, WM_CHANGE_BODY, 0, (LPARAM)tpMailItem);
+	}
 
 	if (ShowFlag == TRUE) {
 		hListView = GetDlgItem(hWnd, IDC_LISTVIEW);
