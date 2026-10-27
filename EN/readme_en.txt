@@ -1,4 +1,4 @@
-nPOP Ver 1.2.7
+nPOP Ver 1.2.8
 --
 
 [Introduction]
@@ -39,6 +39,14 @@ held on a server.
 
 [Update History]
 
+・Ver 1.2.7 -> Ver 1.2.8
+    ・Security fixes
+        ・Fixed memory corruption when parsing malformed mail and server responses
+        ・Stricter validation of attachment save paths and file names
+        ・SMTP sending no longer continues in plain text when STARTTLS is unavailable
+        ・The attach and mailbox parameters of mailto: are now accepted only from the command line
+    ・Fixed long passwords being lost when saved
+
 ・Ver 1.2.6 -> Ver 1.2.7
     ・Fixed an issue where reception would not proceed after an SSL connection was established
     ・Added support for TLS 1.3
@@ -59,4 +67,4 @@ Special thanks:
 Copyright (C) 1996-2026 by Ohno Tomoaki. All rights reserved.
 	https://nakka.com/
 
-8/18/2026
+10/27/2026
