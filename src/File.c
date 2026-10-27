@@ -906,7 +906,13 @@ BOOL filename_is_dangerous(TCHAR *buf)
 		TEXT("drv"), TEXT("cab"), TEXT("crt"), TEXT("der"), TEXT("job"), TEXT("one"),
 		TEXT("docm"), TEXT("dotm"), TEXT("xlsm"), TEXT("xltm"), TEXT("xlam"), TEXT("pptm"),
 		TEXT("potm"), TEXT("ppam"), TEXT("ppsm"), TEXT("sldm"), TEXT("mde"), TEXT("mdb"),
-		TEXT("accde"), TEXT("ade"), TEXT("adp"),
+		TEXT("accde"), TEXT("ade"), TEXT("adp"), TEXT("dot"), TEXT("xlt"), TEXT("pot"),
+		TEXT("xlsb"), TEXT("iqy"), TEXT("slk"), TEXT("dqy"), TEXT("oqy"), TEXT("rqy"),
+		TEXT("odc"), TEXT("udl"), TEXT("mad"), TEXT("maf"), TEXT("mag"), TEXT("mam"),
+		TEXT("maq"), TEXT("mar"), TEXT("mas"), TEXT("mat"), TEXT("mav"), TEXT("maw"),
+		TEXT("rdp"), TEXT("theme"), TEXT("themepack"), TEXT("deskthemepack"), TEXT("jnlp"),
+		TEXT("msu"), TEXT("ppkg"), TEXT("wsb"), TEXT("vsto"), TEXT("mht"), TEXT("mhtml"),
+		TEXT("pfx"), TEXT("p12"), TEXT("cer"), TEXT("p7b"),
 	};
 	TCHAR *p, *ext = NULL;
 	int i;
@@ -984,7 +990,7 @@ static BOOL file_write_zone_identifier(WCHAR *full, int len)
 	if (GetVolumePathNameW(full, vol, MAX_PATH) != FALSE &&
 		GetVolumeInformationW(vol, NULL, 0, NULL, NULL, &flags, NULL, 0) != FALSE &&
 		(flags & FILE_NAMED_STREAMS) == 0) {
-		return TRUE;
+		return FALSE;
 	}
 	// MAX_PATH を超えても書き込めるように \\?\ 形式のパスを使う
 	ads = (WCHAR *)mem_alloc(sizeof(WCHAR) * (len + lstrlenW(L"\\\\?\\UNC") + lstrlenW(L":Zone.Identifier") + 1));
@@ -1051,6 +1057,39 @@ BOOL file_set_zone_identifier(TCHAR *path)
 }
 
 /*
+ * file_volume_has_streams - ファイルのあるボリュームが代替データストリームを持てるか
+ *    判定できない場合は TRUE を返す
+ */
+BOOL file_volume_has_streams(TCHAR *path)
+{
+	TCHAR full[BUF_SIZE], vol[BUF_SIZE];
+	DWORD flags, len;
+
+	len = GetFullPathName(path, BUF_SIZE, full, NULL);
+	if (len == 0 || len >= BUF_SIZE ||
+		GetVolumePathName(full, vol, BUF_SIZE) == FALSE ||
+		GetVolumeInformation(vol, NULL, 0, NULL, NULL, &flags, NULL, 0) == FALSE) {
+		return TRUE;
+	}
+	return ((flags & FILE_NAMED_STREAMS) != 0) ? TRUE : FALSE;
+}
+
+/*
+ * file_confirm_open_without_zone - Zone.Identifier を記録できないファイルを開くか確認する
+ */
+BOOL file_confirm_open_without_zone(HWND hWnd, TCHAR *path)
+{
+	if (file_volume_has_streams(path) == TRUE) {
+		// 記録できるはずのボリュームで失敗した場合は開かない
+		ErrorMessage(hWnd, STR_ERR_ATTACH_ZONE);
+		return FALSE;
+	}
+	// 記録できないボリューム (FAT など) では保護が働かないことを知らせて確認する
+	return (MessageBox(hWnd, STR_Q_ATTACH_ZONE_OPEN, STR_TITLE_ATTACH_MSG,
+		MB_ICONWARNING | MB_YESNO | MB_DEFBUTTON2) == IDYES) ? TRUE : FALSE;
+}
+
+/*
  * file_save_exec - ファイルを保存して実行
  */
 BOOL file_save_exec(HWND hWnd, TCHAR *FileName, char *buf, int len)
@@ -1087,11 +1126,11 @@ BOOL file_save_exec(HWND hWnd, TCHAR *FileName, char *buf, int len)
 		mem_free(&path);
 		return FALSE;
 	}
-	if (file_set_zone_identifier(path) == FALSE) {
+	if (file_set_zone_identifier(path) == FALSE &&
+		file_confirm_open_without_zone(hWnd, path) == FALSE) {
 		// インターネットから取得した印が無いと警告なしに実行されるため開かない
 		DeleteFile(path);
 		mem_free(&path);
-		ErrorMessage(hWnd, STR_ERR_ATTACH_ZONE);
 		return TRUE;
 	}
 

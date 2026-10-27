@@ -452,6 +452,12 @@ static int item_get_mime_content(char *buf, char *header, TCHAR **ret, BOOL mult
 				if (*r == TEXT('\r') || *r == TEXT('\n')) {
 					*r = TEXT(' ');
 				}
+#ifdef UNICODE
+				// •\Ž¦•ûŒü‚ð”½“]‚³‚¹‚é§Œä•¶Žš‚Í•\Ž¦–¼‚Ì‹U‘•‚ÉŽg‚í‚ê‚é‚½‚ß‹ó”’‚É‚·‚é
+				if ((*r >= 0x202A && *r <= 0x202E) || (*r >= 0x2066 && *r <= 0x2069)) {
+					*r = TEXT(' ');
+				}
+#endif
 			}
 		}
 		mem_free(&Content);

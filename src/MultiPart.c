@@ -411,6 +411,8 @@ int multipart_parse(char *ContentType, char *buf, MULTIPART ***tpMultiPart, int 
 		// 本文の位置の取得
 		tpMultiPartItem->sPos = GetBodyPointa(p);
 		if (tpMultiPartItem->sPos == NULL) {
+			// ヘッダの後に空行が無いパートは本文が空のパートとして扱う
+			tpMultiPartItem->sPos = p + tstrlen(p);
 			break;
 		}
 		// 次のpartの位置を取得

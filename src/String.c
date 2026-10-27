@@ -369,7 +369,9 @@ void str_cat_n(TCHAR *ret, char *buf, int len)
 	i = lstrlen(ret);
 	r = ret + i;
 	while (*p != TEXT('\0') && i < len) {
-		*(r++) = *(p++);
+		// サーバからの文字列の制御文字は表示やログを崩すため空白にする
+		*(r++) = ((unsigned)*p < 0x20 || *p == 0x7F) ? TEXT(' ') : *p;
+		p++;
 		i++;
 	}
 	*r = TEXT('\0');
@@ -450,38 +452,25 @@ int str_cmp_ni(const char *buf1, const char *buf2, int len)
  */
 BOOL str_match_t(const TCHAR *ptn, const TCHAR *str)
 {
-	switch (*ptn) {
-	case TEXT('\0'):
-		return (*str == TEXT('\0'));
-	case TEXT('*'):
-		if (*(ptn + 1) == TEXT('\0')) {
-			return TRUE;
-		}
-		if (str_match_t(ptn + 1, str) == TRUE) {
-			return TRUE;
-		}
-		while (*str != TEXT('\0')) {
-			str++;
-			if (str_match_t(ptn + 1, str) == TRUE) {
-				return TRUE;
-			}
-		}
-		return FALSE;
-	case TEXT('?'):
-		return (*str != TEXT('\0')) && str_match_t(ptn + 1, str + 1);
-	default:
-		while (to_lower_t(*ptn) == to_lower_t(*str)) {
-			if (*ptn == TEXT('\0')) {
-				return TRUE;
-			}
+	const TCHAR *star = NULL, *bak = NULL;
+
+	// 直前の * の位置を覚えて戻ることで、再帰せずに比較する
+	while (*str != TEXT('\0')) {
+		if (*ptn == TEXT('*')) {
+			star = ++ptn;
+			bak = str;
+		} else if (*ptn == TEXT('?') || to_lower_t(*ptn) == to_lower_t(*str)) {
 			ptn++;
 			str++;
-			if (*ptn == TEXT('*') || *ptn == TEXT('?')) {
-				return str_match_t(ptn, str);
-			}
+		} else if (star != NULL) {
+			ptn = star;
+			str = ++bak;
+		} else {
+			return FALSE;
 		}
-		return FALSE;
 	}
+	for (; *ptn == TEXT('*'); ptn++);
+	return (*ptn == TEXT('\0'));
 }
 
 /*
@@ -490,38 +479,25 @@ BOOL str_match_t(const TCHAR *ptn, const TCHAR *str)
 #ifdef UNICODE
 BOOL str_match(const char *ptn, const char *str)
 {
-	switch (*ptn) {
-	case '\0':
-		return (*str == '\0');
-	case '*':
-		if (*(ptn + 1) == '\0') {
-			return TRUE;
-		}
-		if (str_match(ptn + 1, str) == TRUE) {
-			return TRUE;
-		}
-		while (*str != '\0') {
-			str++;
-			if (str_match(ptn + 1, str) == TRUE) {
-				return TRUE;
-			}
-		}
-		return FALSE;
-	case '?':
-		return (*str != '\0') && str_match(ptn + 1, str + 1);
-	default:
-		while (to_lower(*ptn) == to_lower(*str)) {
-			if (*ptn == '\0') {
-				return TRUE;
-			}
+	const char *star = NULL, *bak = NULL;
+
+	// 直前の * の位置を覚えて戻ることで、再帰せずに比較する
+	while (*str != '\0') {
+		if (*ptn == '*') {
+			star = ++ptn;
+			bak = str;
+		} else if (*ptn == '?' || to_lower(*ptn) == to_lower(*str)) {
 			ptn++;
 			str++;
-			if (*ptn == '*' || *ptn == '?') {
-				return str_match(ptn, str);
-			}
+		} else if (star != NULL) {
+			ptn = star;
+			str = ++bak;
+		} else {
+			return FALSE;
 		}
-		return FALSE;
 	}
+	for (; *ptn == '*'; ptn++);
+	return (*ptn == '\0');
 }
 #endif
 

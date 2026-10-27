@@ -307,7 +307,9 @@ static void SetReplyMessageBody(MAILITEM *tpMailItem, MAILITEM *tpReMailItem)
 		multipart_free(&tpMultiPart, cnt);
 
 		len = CreateHeaderStringSize(op.ReHeader, tpReMailItem) + 2;
-		len += GetReplyBodySize(mBody, op.QuotationChar);
+		if (mBody != NULL) {
+			len += GetReplyBodySize(mBody, op.QuotationChar);
+		}
 
 		i = mailbox_name_to_index(tpMailItem->MailBox);
 		if (i != -1 && (MailBox + i)->Signature != NULL && *(MailBox + i)->Signature != TEXT('\0')) {

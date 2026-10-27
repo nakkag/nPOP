@@ -499,6 +499,8 @@ TCHAR *filename_next_char(TCHAR *p);
 void filename_attach_conv(TCHAR *buf);
 BOOL filename_is_dangerous(TCHAR *buf);
 BOOL file_set_zone_identifier(TCHAR *path);
+BOOL file_volume_has_streams(TCHAR *path);
+BOOL file_confirm_open_without_zone(HWND hWnd, TCHAR *path);
 BOOL filename_select(HWND hWnd, TCHAR *ret, TCHAR *DefExt, TCHAR *filter, BOOL OpenSave);
 long file_get_size(TCHAR *FileName);
 char *file_read(TCHAR *path, long FileSize);

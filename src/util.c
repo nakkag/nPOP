@@ -1313,8 +1313,11 @@ TCHAR *CreateHeaderString(TCHAR *buf, TCHAR *ret, MAILITEM *tpMailItem)
 int GetReplyBodySize(TCHAR *body, TCHAR *ReStr)
 {
 	TCHAR *p, *s;
-	int len = 0;;
+	int len = 0;
 
+	if (body == NULL) {
+		return 0;
+	}
 	if (ReStr == NULL || *ReStr == TEXT('\0')) {
 		return lstrlen(body);
 	}

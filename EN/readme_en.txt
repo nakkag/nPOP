@@ -41,14 +41,7 @@ held on a server.
 
 ・Ver 1.2.7 -> Ver 1.2.8
     ・Security fixes
-        ・Fixed memory corruption when parsing malformed mail and server responses
-        ・Stricter validation of attachment save paths and file names
-        ・SMTP sending no longer continues in plain text when STARTTLS is unavailable
-        ・The attach and mailbox parameters of mailto: are now accepted only from the command line
-        ・On an unencrypted connection, SMTP authentication that sends the password as plain text (LOGIN/PLAIN) is no longer selected automatically
-        ・The APOP timestamp is now validated
-        ・Opening attachments is safer (long file names keep their extension, executable types always ask for confirmation, a file is not opened when Zone.Identifier cannot be written)
-        ・The attach parameter of mailto: now accepts up to 10 existing files given as absolute paths
+    ・Added safety confirmations and errors when opening attachments, when attachments are given through mailto:, and when sending to a server that does not offer encryption or authentication
     ・Fixed long passwords being lost when saved
 
 ・Ver 1.2.6 -> Ver 1.2.7

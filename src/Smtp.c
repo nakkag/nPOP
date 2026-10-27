@@ -48,6 +48,7 @@ static MAILBOX *send_mail_box;					// 送信中のメールボックス
 static MAILITEM *send_mail_item;				// 送信メール
 static BOOL auth_flag;							// SMTP-AUTH
 static BOOL starttls_flag;						// STARTTLS
+static BOOL helo_flag;							// EHLO に失敗して HELO で再試行中
 static char *send_body, *send_pt;				// 送信用本文
 static int send_len;							// 送信長
 static int send_end_cmd;						// メール送信完了時のコマンド
@@ -839,7 +840,10 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 			r = TEXT(CMD_EHLO)TEXT(" ");
 			command_status = SMTP_EHLO;
 		}
-		if (auth_flag == FALSE && send_mail_box->SmtpAuth == 1) {
+		if (helo_flag == TRUE) {
+			// EHLO に失敗した後は HELO だけを送る
+			auth_flag = FALSE;
+		} else if (auth_flag == FALSE && send_mail_box->SmtpAuth == 1) {
 			// SMTP認証
 			auth_flag = TRUE;
 			auth_type = AUTH_NON;
@@ -876,7 +880,14 @@ static BOOL send_mail_proc(HWND hWnd, SOCKET soc, char *buf, TCHAR *ErrStr, MAIL
 			return FALSE;
 		}
 		if (status >= SMTP_ERRORSTATUS) {
-			// EHLO に失敗した場合は HELO を送信し直す
+			if (send_mail_box->SmtpAuth == 1) {
+				// SMTP 認証には EHLO が必要なため認証なしでは続行しない
+				lstrcpy(ErrStr, STR_ERR_SOCK_NOESMTP);
+				str_cat_n(ErrStr, buf, BUF_SIZE - 1);
+				return FALSE;
+			}
+			// EHLO に失敗した場合は HELO を一度だけ送信し直す
+			helo_flag = TRUE;
 			command_status = SMTP_START;
 			return send_mail_proc(hWnd, soc, NULL, ErrStr, tpMailItem, ShowFlag);
 		}
@@ -1405,6 +1416,7 @@ SOCKET smtp_send_mail(HWND hWnd, MAILBOX *tpMailBox, MAILITEM *tpMailItem, int e
 	send_mail_item = tpMailItem;
 	auth_flag = FALSE;
 	starttls_flag = FALSE;
+	helo_flag = FALSE;
 	send_end_cmd = end_cmd;
 
 	if ((send_mail_item->To == NULL || *send_mail_item->To == TEXT('\0')) &&

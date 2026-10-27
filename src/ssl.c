@@ -741,6 +741,12 @@ DWORD ssl_recv(SOCKET Socket, SSL* _ssl_info, PBYTE pbMessage, DWORD cbMessage)
 				mem_free(&pbIoBuffer);
 				return -1;
 			}
+			if (_ssl_info->verify && ssl_verify_certificate(_ssl_info) != 0) {
+				// 再ネゴシエーションで提示された証明書も検証する
+				mem_free(&(ExtraBuffer.pvBuffer));
+				mem_free(&pbIoBuffer);
+				return -1;
+			}
 			if (ExtraBuffer.pvBuffer) {
 				MoveMemory(pbIoBuffer, ExtraBuffer.pvBuffer, ExtraBuffer.cbBuffer);
 				cbIoBuffer = ExtraBuffer.cbBuffer;

@@ -227,14 +227,23 @@ static TCHAR *get_token_address(TCHAR *p, BOOL *encode)
 			}
 #ifdef UNICODE
 			if (WideCharToMultiByte(CP_ACP, 0, p, 1, NULL, 0, NULL, NULL) > 1) {
+				// 1 文字が 1 TCHAR なので次の文字は飛ばさない
+				*encode = TRUE;
+				continue;
+			}
 #else
 			if (IsDBCSLeadByte((BYTE)*p) == TRUE && *(p + 1) != TEXT('\0')) {
-#endif
 				p++;
 				*encode = TRUE;
 				continue;
 			}
+#endif
 			if (*p == TEXT('\\')) {
+				if (*(p + 1) == TEXT('\0')) {
+					// 終端の直前の \ で終端を越えない
+					p++;
+					break;
+				}
 				p++;
 				continue;
 			}
@@ -253,14 +262,23 @@ static TCHAR *get_token_address(TCHAR *p, BOOL *encode)
 			}
 #ifdef UNICODE
 			if (WideCharToMultiByte(CP_ACP, 0, p, 1, NULL, 0, NULL, NULL) > 1) {
+				// 1 文字が 1 TCHAR なので次の文字は飛ばさない
+				*encode = TRUE;
+				continue;
+			}
 #else
 			if (IsDBCSLeadByte((BYTE)*p) == TRUE && *(p + 1) != TEXT('\0')) {
-#endif
 				p++;
 				*encode = TRUE;
 				continue;
 			}
+#endif
 			if (*p == TEXT('\\')) {
+				if (*(p + 1) == TEXT('\0')) {
+					// 終端の直前の \ で終端を越えない
+					p++;
+					break;
+				}
 				p++;
 				continue;
 			}
@@ -289,7 +307,7 @@ static int get_encode_wrap_len(TCHAR *buf, int len)
 			return i;
 		}
 #ifdef UNICODE
-		if (WideCharToMultiByte(CP_ACP, 0, p, 1, NULL, 0, NULL, NULL) > 1) {
+		if (WideCharToMultiByte(CP_ACP, 0, p, 1, NULL, 0, NULL, NULL) > 1 && *(p + 1) != TEXT('\0')) {
 #else
 		if (IsDBCSLeadByte((BYTE)*p) == TRUE && *(p + 1) != TEXT('\0')) {
 #endif

@@ -19,6 +19,7 @@
 #define OK_LEN					3			// "+OK" のバイト数
 
 #define MAIL_BUF_SIZE			32768		// メール受信用バッファの初期サイズ
+#define MAIL_BUF_INIT_MAX		(32 * 1024 * 1024)	// サーバが通知したサイズから確保する初期バッファの上限
 #define DOWNLOAD_SIZE			65535		// RETR未使用時の全文受信サイズ
 
 #define HEAD_LINE				30			// ヘッダー長
@@ -115,6 +116,10 @@ static int exec_proc_dele(HWND hWnd, SOCKET soc, char *buf, int buflen, TCHAR *E
  */
 static BOOL mail_buf_init(int size)
 {
+	if (size < 0 || size > MAIL_BUF_INIT_MAX) {
+		// サーバが通知したサイズはそのまま信用しない (足りない分は受信中に拡張する)
+		size = MAIL_BUF_INIT_MAX;
+	}
 	if (mail_buf == NULL || mail_buf_size < size) {
 		mem_free(&mail_buf);
 		mail_buf_size = size + 3;
@@ -130,10 +135,28 @@ static BOOL mail_buf_init(int size)
 static BOOL mail_buf_set(char *buf, int len)
 {
 	char *tmp;
+	int grow;
 
+	if (len < 0 || mail_buf_len > 0x7FFFFFFF - (len + 2 + 1)) {
+		// 受信済みサイズが int に収まらない
+		return FALSE;
+	}
 	if (mail_buf_size < (mail_buf_len + len + 2 + 1)) {
-		// 再確保
-		mail_buf_size += (MAIL_BUF_SIZE < len + 2 + 1) ? (len + 2 + 1) : MAIL_BUF_SIZE;
+		// 再確保 (コピー回数を抑えるため倍率で拡張する)
+		grow = mail_buf_size / 2;
+		if (grow < len + 2 + 1) {
+			grow = len + 2 + 1;
+		}
+		if (grow < MAIL_BUF_SIZE) {
+			grow = MAIL_BUF_SIZE;
+		}
+		if (mail_buf_size > 0x7FFFFFFF - grow) {
+			grow = len + 2 + 1;
+			if (mail_buf_size > 0x7FFFFFFF - grow) {
+				return FALSE;
+			}
+		}
+		mail_buf_size += grow;
 		tmp = (char *)mem_alloc(mail_buf_size);
 		if (tmp == NULL) {
 			mail_buf_size = 0;

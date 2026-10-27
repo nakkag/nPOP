@@ -41,6 +41,9 @@
 #define STR_ERR_SAVEEND				TEXT("Save File error\nContinue to exit?")
 #define STR_ERR_ATTACH_ZONE			TEXT("Could not record that the file came from the Internet (Zone.Identifier), so it was not opened.")
 #define STR_ERR_ATTACH_ZONE_SAVE	TEXT("The file was saved, but could not be marked as coming from the Internet (Zone.Identifier).\nTreat it as untrusted.")
+#define STR_Q_ATTACH_ZONE_OPEN		TEXT("This drive (FAT etc.) cannot record that the file came from the Internet (Zone.Identifier),\n")\
+									TEXT("so the protections of Windows and Office will not apply when it is opened.\n\n")\
+									TEXT("Open it anyway?")
 #define STR_ERR_URL_ATTACH			TEXT("The specified attachments include entries that cannot be used (not an absolute path, missing, too many, etc.), so nothing is attached.")
 #define STR_ERR_SAVE				TEXT("Save File error")
 #define STR_ERR_ADD					TEXT("Address not added")
@@ -95,6 +98,7 @@
 #define STR_ERR_SOCK_DATA			TEXT("DATA failed\n\n")
 #define STR_ERR_SOCK_MAILSEND		TEXT("Mail not sent\n\n")
 #define STR_ERR_SOCK_NOSTARTTLS		TEXT("Server does not support STARTTLS; connection not encrypted")
+#define STR_ERR_SOCK_NOESMTP		TEXT("Server rejected EHLO, so SMTP authentication is not possible\n\n")
 #define STR_ERR_SOCK_AUTHPLAIN		TEXT("The connection is not encrypted, so LOGIN/PLAIN authentication (password sent as plain text) is not selected automatically.\nUse SSL/TLS or select the SMTP authentication method.")
 #define STR_ERR_SOCK_SSL_INIT		TEXT("SSL initialization failed")
 #define STR_ERR_SOCK_SSL_VERIFY		TEXT("Server certificate verification failed")

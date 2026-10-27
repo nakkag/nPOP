@@ -37,6 +37,9 @@
 #define STR_ERR_SAVEEND				TEXT("保存に失敗しました\n終了処理を続行しますか？")
 #define STR_ERR_ATTACH_ZONE			TEXT("インターネットから取得したファイルであることを示す情報 (Zone.Identifier) を書き込めなかったため、開くのを中止しました")
 #define STR_ERR_ATTACH_ZONE_SAVE	TEXT("ファイルは保存しましたが、インターネットから取得したファイルであることを示す情報 (Zone.Identifier) を書き込めませんでした。\n信頼できないファイルとして扱ってください")
+#define STR_Q_ATTACH_ZONE_OPEN		TEXT("このドライブ (FAT など) にはインターネットから取得したファイルであることを示す情報 (Zone.Identifier) を書き込めないため、\n")\
+									TEXT("開いたときに Windows や Office の保護機能が働きません。\n\n")\
+									TEXT("それでも開きますか？")
 #define STR_ERR_URL_ATTACH			TEXT("指定された添付ファイルに使用できないもの (絶対パスでない、存在しない、数が多すぎるなど) が含まれているため添付しません")
 #define STR_ERR_SAVE				TEXT("保存に失敗しました")
 #define STR_ERR_ADD					TEXT("追加に失敗しました")
@@ -91,6 +94,7 @@
 #define STR_ERR_SOCK_DATA			TEXT("DATAに失敗しました\n\n")
 #define STR_ERR_SOCK_MAILSEND		TEXT("メール送信に失敗しました\n\n")
 #define STR_ERR_SOCK_NOSTARTTLS		TEXT("サーバがSTARTTLSに対応していないため暗号化できません")
+#define STR_ERR_SOCK_NOESMTP		TEXT("サーバがEHLOを受け付けないためSMTP認証ができません\n\n")
 #define STR_ERR_SOCK_AUTHPLAIN		TEXT("暗号化されていない接続のため、パスワードを平文で送る認証方式(LOGIN/PLAIN)は自動で選択しません。\nSSL/TLSを使用するか、SMTP認証の方式を指定してください")
 #define STR_ERR_SOCK_SSL_INIT		TEXT("SSLの初期化に失敗しました")
 #define STR_ERR_SOCK_SSL_VERIFY		TEXT("サーバ証明書の検証に失敗しました")

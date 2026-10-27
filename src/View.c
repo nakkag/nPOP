@@ -1369,6 +1369,9 @@ static BOOL Decode(HWND hWnd, int id)
 	int EncodeFlag = 0;
 	BOOL ret = TRUE;
 
+	if ((*(tpMultiPart + id))->sPos == NULL) {
+		return FALSE;
+	}
 	SwitchCursor(FALSE);
 
 	if ((*(tpMultiPart + id))->ePos != NULL) {
@@ -1656,7 +1659,8 @@ static BOOL AppViewMail(MAILITEM *tpMailItem)
 		return FALSE;
 	}
 	// メールの内容はインターネットから取得したものとして開く
-	if (file_set_zone_identifier(path) == FALSE) {
+	if (file_set_zone_identifier(path) == FALSE &&
+		file_confirm_open_without_zone(hViewWnd, path) == FALSE) {
 		DeleteFile(path);
 		return FALSE;
 	}
